@@ -29,5 +29,5 @@ sections:
     - Known Issues
   - - doc_changes
     - Documentation Changes
-title: "Ceph Ansible Collection"
+title: "Ceph Automation Collection"
 trivial_section_name: trivial

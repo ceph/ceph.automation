@@ -1,4 +1,4 @@
-"""Unit tests for ceph.ansible"""
+"""Unit tests for ceph.automation"""
 
 
 def test_basic() -> None:

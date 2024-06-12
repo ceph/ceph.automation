@@ -1,6 +1,6 @@
-# Ceph Ansible Collection
+# Ceph Automation Collection
 
-This repository contains the `ceph.ansible` Ansible Collection.
+This repository contains the `ceph.automation` Ansible Collection.
 
 ## Tested with Ansible
 
@@ -17,26 +17,26 @@ Please check the included content on the [Ansible Galaxy page for this collectio
 ## Using this collection
 
 ```
-    ansible-galaxy collection install ceph.ansible
+    ansible-galaxy collection install ceph.automation
 ```
 
 You can also include it in a `requirements.yml` file and install it via `ansible-galaxy collection install -r requirements.yml` using the format:
 
 ```yaml
 collections:
-  - name: ceph.ansible
+  - name: ceph.automation
 ```
 
 To upgrade the collection to the latest available version, run the following command:
 
 ```bash
-ansible-galaxy collection install ceph.ansible --upgrade
+ansible-galaxy collection install ceph.automation --upgrade
 ```
 
 You can also install a specific version of the collection, for example, if you need to downgrade when something is broken in the latest version (please report an issue in this repository). Use the following syntax where `X.Y.Z` can be any [available version](https://galaxy.ansible.com/ceph/ansible):
 
 ```bash
-ansible-galaxy collection install ceph.ansible:==X.Y.Z
+ansible-galaxy collection install ceph.automation:==X.Y.Z
 ```
 
 See [Ansible Using collections](https://docs.ansible.com/ansible/latest/user_guide/collections_using.html) for more details.

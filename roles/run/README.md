@@ -1,4 +1,4 @@
-Ceph.Ansible Run Role
+ceph.automation Run Role
 ========================
 
 A brief description of the role goes here.
@@ -27,20 +27,20 @@ Including an example of how to use your role (for instance, with variables passe
 - name: Execute tasks on servers
   hosts: servers
   roles:
-    - role: ceph.ansible.run
+    - role: ceph.automation.run
       run_x: 42
 ```
 
 Another way to consume this role would be:
 
 ```yaml
-- name: Initialize the run role from ceph.ansible
+- name: Initialize the run role from ceph.automation
   hosts: servers
   gather_facts: false
   tasks:
     - name: Trigger invocation of run role
       ansible.builtin.include_role:
-        name: ceph.ansible.run
+        name: ceph.automation.run
       vars:
         run_x: 42
 ```

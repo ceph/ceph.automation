@@ -4,13 +4,13 @@
 # See https://docs.ansible.com/ansible/latest/dev_guide/collections_galaxy_meta.html
 
 namespace: "ceph"
-name: "ansible"
+name: "automation"
 version: 1.0.0
 readme: README.md
 authors:
-  - your name <example@domain.com>
+  - Teoman ONAY <tonay@ibm.com>
 
-description: your collection description
+description: Ceph automation modules
 license_file: LICENSE
 # TO-DO: update the tags based on your content type
 tags: ["linux", "tools"]
