@@ -15,18 +15,7 @@
 # limitations under the License.
 
 from __future__ import absolute_import, division, print_function
-from typing import List, Tuple, Dict
 __metaclass__ = type
-
-import datetime
-import yaml
-
-from ansible.module_utils.basic import AnsibleModule  # type: ignore
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, build_base_cmd_orch  # type: ignore
-except ImportError:
-    from module_utils.ceph_common import exit_module, build_base_cmd_orch
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -38,24 +27,33 @@ DOCUMENTATION = '''
 ---
 module: ceph_orch_apply
 short_description: apply service spec
-version_added: "2.9"
+version_added: "1.0.0"
 description:
     - apply a service spec
 options:
     fsid:
         description:
             - the fsid of the Ceph cluster to interact with.
+        type: str
         required: false
     image:
         description:
             - The Ceph container image to use.
+        type: str
         required: false
+    docker:
+        description:
+            - Use docker instead of podman
+        type: bool
+        required: false
+        default: false
     spec:
         description:
             - The service spec to apply
+        type: str
         required: true
 author:
-    - Guillaume Abrioux <gabrioux@redhat.com>
+    - Guillaume Abrioux (@guits)
 '''
 
 EXAMPLES = '''
@@ -70,6 +68,28 @@ EXAMPLES = '''
         data_devices:
           all: true
 '''
+
+RETURN = '''#  '''
+
+import traceback
+from ansible.module_utils.basic import missing_required_lib
+try:
+    import yaml
+except ImportError:
+    HAS_ANOTHER_LIBRARY = False
+    ANOTHER_LIBRARY_IMPORT_ERROR = traceback.format_exc()
+else:
+    HAS_ANOTHER_LIBRARY = True
+    ANOTHER_LIBRARY_IMPORT_ERROR = None
+
+from typing import List, Tuple, Dict
+import datetime
+
+from ansible.module_utils.basic import AnsibleModule  # type: ignore
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, build_base_cmd_orch  # type: ignore
+except ImportError:
+    from module_utils.ceph_common import exit_module, build_base_cmd_orch
 
 
 def parse_spec(spec: str) -> Dict:
@@ -123,7 +143,7 @@ def run_module() -> None:
     module_args = dict(
         spec=dict(type='str', required=True),
         fsid=dict(type='str', required=False),
-        docker=dict(type=bool,
+        docker=dict(type='bool',
                     required=False,
                     default=False),
         image=dict(type='str', required=False)
@@ -133,6 +153,11 @@ def run_module() -> None:
         argument_spec=module_args,
         supports_check_mode=True
     )
+
+    if not HAS_ANOTHER_LIBRARY:
+        module.fail_json(
+            msg=missing_required_lib('another_library'),
+            exception=ANOTHER_LIBRARY_IMPORT_ERROR)
 
     startd = datetime.datetime.now()
     spec = module.params.get('spec')

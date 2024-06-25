@@ -3,17 +3,7 @@
 # Author: Guillaume Abrioux <gabrioux@redhat.com>
 
 from __future__ import absolute_import, division, print_function
-from typing import Any, Dict, List, Tuple, Union
 __metaclass__ = type
-
-import datetime
-import json
-
-from ansible.module_utils.basic import AnsibleModule  # type: ignore
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, build_base_cmd_shell, fatal  # type: ignore
-except ImportError:
-    from module_utils.ceph_common import exit_module, build_base_cmd_shell, fatal  # type: ignore
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -25,38 +15,45 @@ DOCUMENTATION = '''
 ---
 module: ceph_config
 short_description: set ceph config
-version_added: "2.10"
+version_added: "1.0.0"
 description:
     - Set Ceph config options.
 options:
     fsid:
         description:
             - the fsid of the Ceph cluster to interact with.
+        type: str
         required: false
     image:
         description:
             - The Ceph container image to use.
+        type: str
         required: false
     action:
         description:
             - whether to get or set the parameter specified in 'option'
         required: false
+        type: str
+        choices: ['get', 'set']
         default: 'set'
     who:
         description:
             - which daemon the configuration should be set to
+        type: str
         required: true
     option:
         description:
             - name of the parameter to be set
+        type: str
         required: true
     value:
         description:
             - value of the parameter
-        required: true if action is 'set'
+        type: str
+        required: false
 
 author:
-    - Guillaume Abrioux <gabrioux@redhat.com>
+    - guillaume abrioux (@guits)
 '''
 
 EXAMPLES = '''
@@ -83,6 +80,16 @@ EXAMPLES = '''
 '''
 
 RETURN = '''#  '''
+
+from typing import Any, Dict, List, Tuple, Union
+from ansible.module_utils.basic import AnsibleModule  # type: ignore
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, build_base_cmd_shell, fatal  # type: ignore
+except ImportError:
+    from module_utils.ceph_common import exit_module, build_base_cmd_shell, fatal  # type: ignore
+
+import datetime
+import json
 
 
 def set_option(module: "AnsibleModule",

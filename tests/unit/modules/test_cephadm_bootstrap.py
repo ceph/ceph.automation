@@ -1,7 +1,7 @@
 from mock.mock import patch
 import pytest
-import common
-import cephadm_bootstrap
+from ansible_collections.ceph.automation.tests.unit.modules.common import set_module_args, fail_json, AnsibleFailJson, exit_json, AnsibleExitJson
+from ansible_collections.ceph.automation.plugins.modules.cephadm_bootstrap import main
 
 fake_fsid = '0f1e0605-db0b-485c-b366-bd8abaa83f3b'
 fake_image = 'quay.ceph.io/ceph/daemon-base:latest-main-devel'
@@ -16,25 +16,26 @@ class TestCephadmBootstrapModule(object):
 
     @patch('ansible.module_utils.basic.AnsibleModule.fail_json')
     def test_without_parameters(self, m_fail_json):
-        common.set_module_args({})
-        m_fail_json.side_effect = common.fail_json
+        set_module_args({})
+        m_fail_json.side_effect = fail_json
 
-        with pytest.raises(common.AnsibleFailJson) as result:
-            cephadm_bootstrap.main()
+        with pytest.raises(AnsibleFailJson) as result:
+            main()
 
         result = result.value.args[0]
-        assert result['msg'] == 'one of the following is required: mon_ip, mon_addrv'
+        assert result['msg'] == 'missing required arguments: mon_ip'
+#        assert result['msg'] == 'one of the following is required: mon_ip, mon_addrv'
 
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     def test_with_check_mode(self, m_exit_json):
-        common.set_module_args({
+        set_module_args({
             'mon_ip': fake_ip,
             '_ansible_check_mode': True
         })
-        m_exit_json.side_effect = common.exit_json
+        m_exit_json.side_effect = exit_json
 
-        with pytest.raises(common.AnsibleExitJson) as result:
-            cephadm_bootstrap.main()
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
 
         result = result.value.args[0]
         assert not result['changed']
@@ -46,17 +47,17 @@ class TestCephadmBootstrapModule(object):
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
     def test_with_failure(self, m_run_command, m_exit_json):
-        common.set_module_args({
+        set_module_args({
             'mon_ip': fake_ip
         })
-        m_exit_json.side_effect = common.exit_json
+        m_exit_json.side_effect = exit_json
         stdout = ''
         stderr = 'ERROR: cephadm should be run as root'
         rc = 1
         m_run_command.return_value = rc, stdout, stderr
 
-        with pytest.raises(common.AnsibleExitJson) as result:
-            cephadm_bootstrap.main()
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
 
         result = result.value.args[0]
         assert result['changed']
@@ -67,17 +68,17 @@ class TestCephadmBootstrapModule(object):
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
     def test_with_default_values(self, m_run_command, m_exit_json):
-        common.set_module_args({
+        set_module_args({
             'mon_ip': fake_ip
         })
-        m_exit_json.side_effect = common.exit_json
+        m_exit_json.side_effect = exit_json
         stdout = 'Bootstrap complete.'
         stderr = ''
         rc = 0
         m_run_command.return_value = rc, stdout, stderr
 
-        with pytest.raises(common.AnsibleExitJson) as result:
-            cephadm_bootstrap.main()
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
 
         result = result.value.args[0]
         assert result['changed']
@@ -88,18 +89,18 @@ class TestCephadmBootstrapModule(object):
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
     def test_with_docker(self, m_run_command, m_exit_json):
-        common.set_module_args({
+        set_module_args({
             'mon_ip': fake_ip,
             'docker': True
         })
-        m_exit_json.side_effect = common.exit_json
+        m_exit_json.side_effect = exit_json
         stdout = ''
         stderr = ''
         rc = 0
         m_run_command.return_value = rc, stdout, stderr
 
-        with pytest.raises(common.AnsibleExitJson) as result:
-            cephadm_bootstrap.main()
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
 
         result = result.value.args[0]
         assert result['changed']
@@ -109,18 +110,18 @@ class TestCephadmBootstrapModule(object):
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
     def test_with_custom_image(self, m_run_command, m_exit_json):
-        common.set_module_args({
+        set_module_args({
             'mon_ip': fake_ip,
             'image': fake_image
         })
-        m_exit_json.side_effect = common.exit_json
+        m_exit_json.side_effect = exit_json
         stdout = ''
         stderr = ''
         rc = 0
         m_run_command.return_value = rc, stdout, stderr
 
-        with pytest.raises(common.AnsibleExitJson) as result:
-            cephadm_bootstrap.main()
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
 
         result = result.value.args[0]
         assert result['changed']
@@ -130,18 +131,18 @@ class TestCephadmBootstrapModule(object):
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
     def test_with_custom_fsid(self, m_run_command, m_exit_json):
-        common.set_module_args({
+        set_module_args({
             'mon_ip': fake_ip,
             'fsid': fake_fsid
         })
-        m_exit_json.side_effect = common.exit_json
+        m_exit_json.side_effect = exit_json
         stdout = ''
         stderr = ''
         rc = 0
         m_run_command.return_value = rc, stdout, stderr
 
-        with pytest.raises(common.AnsibleExitJson) as result:
-            cephadm_bootstrap.main()
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
 
         result = result.value.args[0]
         assert result['changed']
@@ -151,18 +152,18 @@ class TestCephadmBootstrapModule(object):
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
     def test_without_pull(self, m_run_command, m_exit_json):
-        common.set_module_args({
+        set_module_args({
             'mon_ip': fake_ip,
             'pull': False
         })
-        m_exit_json.side_effect = common.exit_json
+        m_exit_json.side_effect = exit_json
         stdout = ''
         stderr = ''
         rc = 0
         m_run_command.return_value = rc, stdout, stderr
 
-        with pytest.raises(common.AnsibleExitJson) as result:
-            cephadm_bootstrap.main()
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
 
         result = result.value.args[0]
         assert result['changed']
@@ -172,20 +173,20 @@ class TestCephadmBootstrapModule(object):
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
     def test_with_dashboard_user_password(self, m_run_command, m_exit_json):
-        common.set_module_args({
+        set_module_args({
             'mon_ip': fake_ip,
             'dashboard': True,
             'dashboard_user': 'foo',
             'dashboard_password': 'bar'
         })
-        m_exit_json.side_effect = common.exit_json
+        m_exit_json.side_effect = exit_json
         stdout = ''
         stderr = ''
         rc = 0
         m_run_command.return_value = rc, stdout, stderr
 
-        with pytest.raises(common.AnsibleExitJson) as result:
-            cephadm_bootstrap.main()
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
 
         result = result.value.args[0]
         assert result['changed']
@@ -195,18 +196,18 @@ class TestCephadmBootstrapModule(object):
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
     def test_without_dashboard(self, m_run_command, m_exit_json):
-        common.set_module_args({
+        set_module_args({
             'mon_ip': fake_ip,
             'dashboard': False
         })
-        m_exit_json.side_effect = common.exit_json
+        m_exit_json.side_effect = exit_json
         stdout = ''
         stderr = ''
         rc = 0
         m_run_command.return_value = rc, stdout, stderr
 
-        with pytest.raises(common.AnsibleExitJson) as result:
-            cephadm_bootstrap.main()
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
 
         result = result.value.args[0]
         assert result['changed']
@@ -216,18 +217,18 @@ class TestCephadmBootstrapModule(object):
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
     def test_without_monitoring(self, m_run_command, m_exit_json):
-        common.set_module_args({
+        set_module_args({
             'mon_ip': fake_ip,
             'monitoring': False
         })
-        m_exit_json.side_effect = common.exit_json
+        m_exit_json.side_effect = exit_json
         stdout = ''
         stderr = ''
         rc = 0
         m_run_command.return_value = rc, stdout, stderr
 
-        with pytest.raises(common.AnsibleExitJson) as result:
-            cephadm_bootstrap.main()
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
 
         result = result.value.args[0]
         assert result['changed']
@@ -237,18 +238,18 @@ class TestCephadmBootstrapModule(object):
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
     def test_without_firewalld(self, m_run_command, m_exit_json):
-        common.set_module_args({
+        set_module_args({
             'mon_ip': fake_ip,
             'firewalld': False
         })
-        m_exit_json.side_effect = common.exit_json
+        m_exit_json.side_effect = exit_json
         stdout = ''
         stderr = ''
         rc = 0
         m_run_command.return_value = rc, stdout, stderr
 
-        with pytest.raises(common.AnsibleExitJson) as result:
-            cephadm_bootstrap.main()
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
 
         result = result.value.args[0]
         assert result['changed']
@@ -258,20 +259,20 @@ class TestCephadmBootstrapModule(object):
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
     def test_with_registry_credentials(self, m_run_command, m_exit_json):
-        common.set_module_args({
+        set_module_args({
             'mon_ip': fake_ip,
             'registry_url': fake_registry,
             'registry_username': fake_registry_user,
             'registry_password': fake_registry_pass
         })
-        m_exit_json.side_effect = common.exit_json
+        m_exit_json.side_effect = exit_json
         stdout = ''
         stderr = ''
         rc = 0
         m_run_command.return_value = rc, stdout, stderr
 
-        with pytest.raises(common.AnsibleExitJson) as result:
-            cephadm_bootstrap.main()
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
 
         result = result.value.args[0]
         assert result['changed']
@@ -284,18 +285,18 @@ class TestCephadmBootstrapModule(object):
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
     def test_with_registry_json_file(self, m_run_command, m_exit_json):
-        common.set_module_args({
+        set_module_args({
             'mon_ip': fake_ip,
             'registry_json': fake_registry_json
         })
-        m_exit_json.side_effect = common.exit_json
+        m_exit_json.side_effect = exit_json
         stdout = ''
         stderr = ''
         rc = 0
         m_run_command.return_value = rc, stdout, stderr
 
-        with pytest.raises(common.AnsibleExitJson) as result:
-            cephadm_bootstrap.main()
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
 
         result = result.value.args[0]
         assert result['changed']

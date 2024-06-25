@@ -2,3 +2,4 @@
 pytest-ansible
 pytest-xdist
 molecule
+mock

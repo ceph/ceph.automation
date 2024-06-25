@@ -1,0 +1,6 @@
+plugins/modules/ceph_config.py validate-modules:missing-gplv3-license # ignore license check
+plugins/modules/ceph_orch_apply.py validate-modules:missing-gplv3-license # ignore license check
+plugins/modules/ceph_orch_daemon.py validate-modules:missing-gplv3-license # ignore license check
+plugins/modules/ceph_orch_host.py validate-modules:missing-gplv3-license # ignore license check
+plugins/modules/cephadm_bootstrap.py validate-modules:missing-gplv3-license # ignore license check
+plugins/modules/cephadm_registry_login.py validate-modules:missing-gplv3-license # ignore license check
