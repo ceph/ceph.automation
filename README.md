@@ -63,6 +63,6 @@ See the [changelog](https://github.com/ansible-collections/REPONAMEHERE/tree/mai
 
 ## Licensing
 
-GNU General Public License v3.0 or later.
+Apache License, Version 2.0.
 
-See [LICENSE](https://www.gnu.org/licenses/gpl-3.0.txt) to see the full text.
+See [LICENSE](http://www.apache.org/licenses/LICENSE-2.0) to see the full text.
