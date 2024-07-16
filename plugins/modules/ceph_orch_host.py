@@ -15,17 +15,7 @@
 # limitations under the License.
 
 from __future__ import absolute_import, division, print_function
-from typing import Optional, List, Tuple
 __metaclass__ = type
-
-import datetime
-import json
-
-from ansible.module_utils.basic import AnsibleModule  # type: ignore
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, build_base_cmd_orch  # type: ignore
-except ImportError:
-    from module_utils.ceph_common import exit_module, build_base_cmd_orch
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -37,36 +27,50 @@ DOCUMENTATION = '''
 ---
 module: ceph_orch_host
 short_description: add/remove hosts
-version_added: "2.9"
+version_added: "1.0.0"
 description:
     - Add or remove hosts from ceph orchestration.
 options:
     fsid:
         description:
             - the fsid of the Ceph cluster to interact with.
+        type: str
         required: false
     name:
         description:
             - name of the host
+        type: str
         required: true
     image:
         description:
             - The Ceph container image to use.
+        type: str
         required: false
+    docker:
+        description:
+            - Use docker instead of podman
+        type: bool
+        required: false
+        default: false
     address:
         description:
             - address of the host
-        required: true when state is present
+            - true when state is present
+        type: str
+        required: false
     set_admin_label:
         description:
             - enforce '_admin' label on the host specified
               in 'name'
+        type: bool
         required: false
         default: false
     labels:
         description:
             - list of labels to apply on the host
         required: false
+        type: list
+        elements: str
         default: []
     state:
         description:
@@ -76,10 +80,15 @@ options:
               'name'.
             - if set to 'drain', it will schedule to remove all daemons
               from the host specified in 'name'.
+        choices:
+            - present
+            - absent
+            - drain
+        type: str
         required: false
         default: present
 author:
-    - Guillaume Abrioux <gabrioux@redhat.com>
+    - Guillaume Abrioux (@guits)
 '''
 
 EXAMPLES = '''
@@ -102,6 +111,18 @@ EXAMPLES = '''
     name: my-node-01
     state: absent
 '''
+
+RETURN = '''#  '''
+
+from ansible.module_utils.basic import AnsibleModule  # type: ignore
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, build_base_cmd_orch  # type: ignore
+except ImportError:
+    from module_utils.ceph_common import exit_module, build_base_cmd_orch
+
+from typing import Optional, List, Tuple
+import datetime
+import json
 
 
 def get_current_state(module: "AnsibleModule") -> Tuple[int, List[str], str, str]:
@@ -154,13 +175,13 @@ def main() -> None:
         argument_spec=dict(
             name=dict(type='str', required=True),
             address=dict(type='str', required=False),
-            set_admin_label=dict(type=bool, required=False, default=False),
-            labels=dict(type='list', required=False, default=[]),
+            set_admin_label=dict(type='bool', required=False, default=False),
+            labels=dict(type='list', elements='str', required=False, default=[]),
             state=dict(type='str',
                        required=False,
                        choices=['present', 'absent', 'drain'],
                        default='present'),
-            docker=dict(type=bool,
+            docker=dict(type='bool',
                         required=False,
                         default=False),
             fsid=dict(type='str', required=False),

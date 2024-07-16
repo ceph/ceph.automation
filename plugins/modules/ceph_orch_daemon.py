@@ -3,17 +3,7 @@
 # Author: Guillaume Abrioux <gabrioux@redhat.com>
 
 from __future__ import absolute_import, division, print_function
-from typing import List, Tuple
 __metaclass__ = type
-
-import datetime
-import json
-
-from ansible.module_utils.basic import AnsibleModule  # type: ignore
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import retry, exit_module, build_base_cmd_orch, fatal  # type: ignore
-except ImportError:
-    from module_utils.ceph_common import retry, exit_module, build_base_cmd_orch, fatal  # type: ignore
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -25,17 +15,25 @@ DOCUMENTATION = '''
 ---
 module: ceph_orch_daemon
 short_description: stop/start daemon
-version_added: "2.9"
+version_added: "1.0.0"
 description:
     - Start, stop or restart ceph daemon
 options:
     fsid:
         description:
             - the fsid of the Ceph cluster to interact with.
+        type: str
         required: false
     image:
         description:
             - The Ceph container image to use.
+        type: str
+        required: false
+    docker:
+        description:
+            - Use docker instead of podman
+        type: bool
+        default: false
         required: false
     state:
         description:
@@ -43,18 +41,25 @@ options:
               If 'started', it ensures the service is started.
               If 'stopped', it ensures the service is stopped.
               If 'restarted', it will restart the service.
+        choices:
+            - started
+            - stopped
+            - restarted
+        type: str
         required: True
     daemon_id:
         description:
             - The id of the service.
+        type: str
         required: true
     daemon_type:
         description:
             - The type of the service.
+        type: str
         required: true
 
 author:
-    - Guillaume Abrioux <gabrioux@redhat.com>
+    - Guillaume Abrioux (@guits)
 '''
 
 EXAMPLES = '''
@@ -72,6 +77,16 @@ EXAMPLES = '''
 '''
 
 RETURN = '''#  '''
+
+from ansible.module_utils.basic import AnsibleModule  # type: ignore
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import retry, exit_module, build_base_cmd_orch, fatal  # type: ignore
+except ImportError:
+    from module_utils.ceph_common import retry, exit_module, build_base_cmd_orch, fatal  # type: ignore
+
+from typing import List, Tuple
+import datetime
+import json
 
 
 def get_current_state(module: "AnsibleModule",
@@ -97,7 +112,7 @@ def update_daemon_status(module: "AnsibleModule",
     return rc, cmd, out, err
 
 
-@retry(RuntimeError)
+@retry(RuntimeError, AnsibleModule)
 def validate_updated_status(module: "AnsibleModule",
                             action: str,
                             daemon_type: str,
@@ -116,7 +131,7 @@ def main() -> None:
                        choices=['started', 'stopped', 'restarted']),
             daemon_id=dict(type='str', required=True),
             daemon_type=dict(type='str', required=True),
-            docker=dict(type=bool,
+            docker=dict(type='bool',
                         required=False,
                         default=False),
             fsid=dict(type='str', required=False),

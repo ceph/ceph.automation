@@ -17,15 +17,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import datetime
-from typing import List, Tuple
-
-from ansible.module_utils.basic import AnsibleModule  # type: ignore
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, build_base_cmd, fatal  # type: ignore
-except ImportError:
-    from module_utils.ceph_common import exit_module, build_base_cmd, fatal
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -36,7 +27,7 @@ DOCUMENTATION = '''
 ---
 module: cephadm_registry_login
 short_description: Log in to container registry
-version_added: "2.9"
+version_added: "1.0.0"
 description:
     - Call cephadm registry-login command for logging in to container registry
 options:
@@ -44,30 +35,42 @@ options:
         description:
             - log in or log out from the registry.
         default: login
+        choices:
+            - login
+            - logout
+        type: str
         required: false
     docker:
         description:
             - Use docker instead of podman.
+        type: bool
         required: false
+        default: false
     registry_url:
         description:
             - The url of the registry
+        type: str
         required: true
     registry_username:
         description:
             - The username to log in
-        required: true when state is 'login'
+            - true when state is 'login'
+        type: str
+        required: false
     registry_password:
         description:
             - The corresponding password to log in.
-        required: true when state is 'login'
+            - true when state is 'login'
+        type: str
+        required: false
     registry_json:
         description:
             - The path to a json file. This file must be present on remote hosts
               prior to running this task.
               *not supported yet*.
+        type: str
 author:
-    - Guillaume Abrioux <gabrioux@redhat.com>
+    - Guillaume Abrioux (@guits)
 '''
 
 EXAMPLES = '''
@@ -84,6 +87,15 @@ EXAMPLES = '''
 '''
 
 RETURN = '''#  '''
+
+import datetime
+from typing import List, Tuple
+
+from ansible.module_utils.basic import AnsibleModule  # type: ignore
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, build_base_cmd, fatal  # type: ignore
+except ImportError:
+    from module_utils.ceph_common import exit_module, build_base_cmd, fatal
 
 
 def build_base_container_cmd(module: "AnsibleModule", action: str = 'login') -> List[str]:
@@ -133,7 +145,7 @@ def main() -> None:
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(type='str', required=False, default='login', choices=['login', 'logout']),
-            docker=dict(type=bool,
+            docker=dict(type='bool',
                         required=False,
                         default=False),
             registry_url=dict(type='str', required=True),
@@ -185,8 +197,8 @@ def main() -> None:
         'logout': f'Already logged out from {registry_url}.'
     }
     action_msg = {
-         'login': f'Couldn\'t log in to {registry_url} with {registry_username}.',
-         'logout': f'Couldn\'t log out from {registry_url}.'
+        'login': f'Couldn\'t log in to {registry_url} with {registry_username}.',
+        'logout': f'Couldn\'t log out from {registry_url}.'
     }
 
     if state == 'login' and not current_status or state == 'logout' and current_status:

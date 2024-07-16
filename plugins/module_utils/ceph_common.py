@@ -1,6 +1,9 @@
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 import datetime
 import time
-from typing import TYPE_CHECKING, Any, List, Dict, Callable, Type, TypeVar
+from typing import TYPE_CHECKING, Any, List, Dict, Callable, Type, TypeVar, Optional
 
 if TYPE_CHECKING:
     from ansible.module_utils.basic import AnsibleModule  # type: ignore
@@ -8,18 +11,18 @@ if TYPE_CHECKING:
 ExceptionType = TypeVar('ExceptionType', bound=BaseException)
 
 
-def retry(exceptions: Type[ExceptionType], retries: int = 20, delay: int = 1) -> Callable:
+def retry(exceptions: Type[ExceptionType], module: "AnsibleModule", retries: int = 20, delay: int = 1) -> Callable:
     def decorator(f: Callable) -> Callable:
         def _retry(*args: Any, **kwargs: Any) -> Callable:
             _tries = retries
             while _tries > 1:
                 try:
-                    print("{}".format(_tries))
+                    module.debug(_tries)
                     return f(*args, **kwargs)
                 except exceptions:
                     time.sleep(delay)
                     _tries -= 1
-            print("{} has failed after {} tries".format(f, retries))
+            module.debug(f, " has failed after ", retries, " retries")
             return f(*args, **kwargs)
         return _retry
     return decorator
@@ -63,7 +66,7 @@ def exit_module(module: "AnsibleModule",
                 out: str = '',
                 err: str = '',
                 changed: bool = False,
-                diff: Dict[str, str] = dict(before="", after="")) -> None:
+                diff: Optional[Dict[str, str]] = None) -> None:
     endd = datetime.datetime.now()
     delta = endd - startd
 

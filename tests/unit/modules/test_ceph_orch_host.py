@@ -1,20 +1,20 @@
 from mock.mock import patch
 import pytest
-import common
-import ceph_orch_host
+from ansible_collections.ceph.automation.tests.unit.modules.common import set_module_args, exit_json, AnsibleExitJson, exit_json
+from ansible_collections.ceph.automation.plugins.modules.ceph_orch_host import main
 
 
 class TestCephOrchHost(object):
 
-    @patch('ceph_orch_host.get_current_state')
+    @patch('ansible_collections.ceph.automation.plugins.modules.ceph_orch_host.get_current_state')
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
     def test_state_absent_host_exists(self, m_run_command, m_exit_json, m_get_current_state):
-        common.set_module_args({
+        set_module_args({
             'state': 'absent',
             'name': 'ceph-node5'
         })
-        m_exit_json.side_effect = common.exit_json
+        m_exit_json.side_effect = exit_json
         stdout = "Removed  host 'ceph-node5'"
         stderr = ''
         rc = 0
@@ -29,8 +29,8 @@ class TestCephOrchHost(object):
                                                 "--format",
                                                 "json"], m_get_current_state_stdout, stderr
 
-        with pytest.raises(common.AnsibleExitJson) as result:
-            ceph_orch_host.main()
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
 
         result = result.value.args[0]
         assert result['changed']
@@ -38,15 +38,15 @@ class TestCephOrchHost(object):
         assert result['stdout'] == stdout
         assert result['rc'] == 0
 
-    @patch('ceph_orch_host.get_current_state')
+    @patch('ansible_collections.ceph.automation.plugins.modules.ceph_orch_host.get_current_state')
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
     def test_state_absent_host_doesnt_exist(self, m_run_command, m_exit_json, m_get_current_state):
-        common.set_module_args({
+        set_module_args({
             'state': 'absent',
             'name': 'ceph-node1'
         })
-        m_exit_json.side_effect = common.exit_json
+        m_exit_json.side_effect = exit_json
 
         stdout = ""
         stderr = "Error EINVAL: host ceph-node1 does not exist"
@@ -63,23 +63,23 @@ class TestCephOrchHost(object):
                                                 "--format",
                                                 "json"], m_get_current_state_stdout, stderr
 
-        with pytest.raises(common.AnsibleExitJson) as result:
-            ceph_orch_host.main()
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
 
         result = result.value.args[0]
         assert not result['changed']
         assert result['stdout'] == 'ceph-node1 is not present, skipping.'
         assert result['rc'] == 0
 
-    @patch('ceph_orch_host.get_current_state')
+    @patch('ansible_collections.ceph.automation.plugins.modules.ceph_orch_host.get_current_state')
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
     def test_state_drain(self, m_run_command, m_exit_json, m_get_current_state):
-        common.set_module_args({
+        set_module_args({
             'state': 'drain',
             'name': 'ceph-node5'
         })
-        m_exit_json.side_effect = common.exit_json
+        m_exit_json.side_effect = exit_json
         stdout = """
 Scheduled to remove the following daemons from host 'ceph-node5'
 type                 id
@@ -102,8 +102,8 @@ osd                  7"""
                                                 "--format",
                                                 "json"], m_get_current_state_stdout, stderr
 
-        with pytest.raises(common.AnsibleExitJson) as result:
-            ceph_orch_host.main()
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
 
         result = result.value.args[0]
         assert result['changed']
@@ -111,15 +111,15 @@ osd                  7"""
         assert result['stdout'] == stdout
         assert result['rc'] == 0
 
-    @patch('ceph_orch_host.get_current_state')
+    @patch('ansible_collections.ceph.automation.plugins.modules.ceph_orch_host.get_current_state')
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
     def test_state_present_no_label_diff(self, m_run_command, m_exit_json, m_get_current_state):
-        common.set_module_args({
+        set_module_args({
             'state': 'present',
             'name': 'ceph-node5'
         })
-        m_exit_json.side_effect = common.exit_json
+        m_exit_json.side_effect = exit_json
         stdout = "ceph-node5 is already present, skipping."
         stderr = ''
         rc = 0
@@ -134,24 +134,24 @@ osd                  7"""
                                                 "--format",
                                                 "json"], m_get_current_state_stdout, stderr
 
-        with pytest.raises(common.AnsibleExitJson) as result:
-            ceph_orch_host.main()
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
 
         result = result.value.args[0]
         assert not result['changed']
         assert result['stdout'] == stdout
         assert result['rc'] == 0
 
-    @patch('ceph_orch_host.get_current_state')
+    @patch('ansible_collections.ceph.automation.plugins.modules.ceph_orch_host.get_current_state')
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
     def test_state_present_label_diff(self, m_run_command, m_exit_json, m_get_current_state):
-        common.set_module_args({
+        set_module_args({
             'state': 'present',
             'name': 'ceph-node5',
             'labels': ["label1", "label2"]
         })
-        m_exit_json.side_effect = common.exit_json
+        m_exit_json.side_effect = exit_json
         stdout = "Label(s) updated:"
         stderr = ''
         rc = 0
@@ -167,8 +167,8 @@ osd                  7"""
                                                 "--format",
                                                 "json"], m_get_current_state_stdout, stderr
 
-        with pytest.raises(common.AnsibleExitJson) as result:
-            ceph_orch_host.main()
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
 
         result = result.value.args[0]
         assert result['changed']
@@ -177,16 +177,16 @@ osd                  7"""
         assert 'label2' in result['stdout']
         assert result['rc'] == 0
 
-    @patch('ceph_orch_host.get_current_state')
+    @patch('ansible_collections.ceph.automation.plugins.modules.ceph_orch_host.get_current_state')
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
     def test_state_present_label_diff_error(self, m_run_command, m_exit_json, m_get_current_state):
-        common.set_module_args({
+        set_module_args({
             'state': 'present',
             'name': 'ceph-node5',
             'labels': ["label1", "label2"]
         })
-        m_exit_json.side_effect = common.exit_json
+        m_exit_json.side_effect = exit_json
         stdout = ''
         stderr = 'fake error'
         rc = 0
@@ -202,5 +202,5 @@ osd                  7"""
                                                 "json"], m_get_current_state_stdout, stderr
 
         with pytest.raises(RuntimeError) as result:
-            ceph_orch_host.main()
+            main()
             assert result == 'fake error'

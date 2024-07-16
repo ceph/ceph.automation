@@ -19,15 +19,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import datetime
-import os
-
-from ansible.module_utils.basic import AnsibleModule  # type: ignore
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module  # type: ignore
-except ImportError:
-    from module_utils.ceph_common import exit_module
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -38,96 +29,362 @@ DOCUMENTATION = '''
 ---
 module: cephadm_bootstrap
 short_description: Bootstrap a Ceph cluster via cephadm
-version_added: "2.8"
+version_added: "1.0.0"
 description:
     - Bootstrap a Ceph cluster via cephadm
 options:
     mon_ip:
         description:
             - Ceph monitor IP address.
+        type: str
         required: true
     image:
         description:
             - Ceph container image.
+        type: str
         required: false
     docker:
         description:
             - Use docker instead of podman.
+        type: bool
         required: false
+        default: false
     fsid:
         description:
             - Ceph FSID.
+        type: str
         required: false
     pull:
         description:
             - Pull the Ceph container image.
+        type: bool
         required: false
-        default: true
     dashboard:
         description:
             - Deploy the Ceph dashboard.
+        type: bool
         required: false
-        default: true
     dashboard_user:
         description:
             - Ceph dashboard user.
+        type: str
         required: false
     dashboard_password:
         description:
             - Ceph dashboard password.
+        type: str
+        required: false
+    skip_dashboard:
+        description:
+            - skip dashboard installation.
+        type: bool
+        default: false
+        required: false
+    skip_firewalld:
+        description:
+            - skip firewall management.
+        type: bool
+        default: false
+        required: false
+    skip_monitoring_stack:
+        description:
+            - skip monitoring stack deployment.
+        type: bool
+        default: false
         required: false
     monitoring:
         description:
             - Deploy the monitoring stack.
+        type: bool
         required: false
-        default: true
     firewalld:
         description:
             - Manage firewall rules with firewalld.
+        type: bool
         required: false
-        default: true
     allow_overwrite:
         description:
-            - allow overwrite of existing –output-* config/keyring/ssh files.
+            - allow overwrite of existing output-* config/keyring/ssh files.
+        type: bool
         required: false
         default: false
     registry_url:
         description:
             - URL for custom registry.
+        type: str
         required: false
     registry_username:
         description:
             - Username for custom registry.
+        type: str
         required: false
     registry_password:
         description:
             - Password for custom registry.
+        type: str
         required: false
     registry_json:
         description:
             - JSON file with custom registry login info (URL,
               username, password).
+        type: str
         required: false
     ssh_user:
         description:
             - SSH user used for cephadm ssh to the hosts.
+        type: str
         required: false
     ssh_config:
         description:
             - SSH config file path for cephadm ssh client.
+        type: str
         required: false
     allow_fqdn_hostname:
         description:
             - Allow hostname that is fully-qualified.
+        type: bool
         required: false
         default: false
     cluster_network:
         description:
             - subnet to use for cluster replication, recovery and heartbeats.
+        type: str
+        required: false
+    allow_mismatched_release:
+        description:
+            - WIP
+        type: bool
+        required: false
+    apply_spec:
+        description:
+            - WIP
+        type: str
+        required: false
+    config:
+        description:
+            - WIP
+        type: str
+        required: false
+    dashboard_crt:
+        description:
+            - WIP
+        type: str
+        required: false
+    dashboard_key:
+        description:
+            - WIP
+        type: str
+        required: false
+    dashboard_password_noupdate:
+        description:
+            - WIP
+        type: bool
+        required: false
+    initial_dashboard_password:
+        description:
+            - WIP
+        type: str
+        required: false
+    initial_dashboard_user:
+        description:
+            - WIP
+        type: str
+        required: false
+    log_to_file:
+        description:
+            - WIP
+        type: bool
+        required: false
+    mgr_id:
+        description:
+            - WIP
+        type: str
+        required: false
+    mon_addrv:
+        description:
+            - WIP
+        type: str
+        required: false
+    mon_id:
+        description:
+            - WIP
+        type: str
+        required: false
+    no_cleanup_on_failure:
+        description:
+            - WIP
+        type: bool
+        required: false
+    no_minimize_config:
+        description:
+            - WIP
+        type: bool
+        required: false
+    orphan_initial_daemons:
+        description:
+            - WIP
+        type: bool
+        required: false
+    output_config:
+        description:
+            - WIP
+        type: str
+        required: false
+    output_dir:
+        description:
+            - WIP
+        type: str
+        required: false
+    output_keyring:
+        description:
+            - WIP
+        type: str
+        required: false
+    output_pub_ssh_key:
+        description:
+            - WIP
+        type: str
+        required: false
+    shared_ceph_folder:
+        description:
+            - WIP
+        type: str
+        required: false
+    single_host_defaults:
+        description:
+            - WIP
+        type: bool
+        required: false
+    skip_admin_label:
+        description:
+            - WIP
+        type: bool
+        required: false
+    skip_mon_network:
+        description:
+            - WIP
+        type: bool
+        required: false
+    skip_ping_check:
+        description:
+            - WIP
+        type: bool
+        required: false
+    skip_prepare_host:
+        description:
+            - WIP
+        type: bool
+        required: false
+    skip_pull:
+        description:
+            - WIP
+        type: bool
+        required: false
+    skip_ssh:
+        description:
+            - WIP
+        type: bool
+        required: false
+    ssh_private_key:
+        description:
+            - WIP
+        type: str
+        required: false
+    ssh_public_key:
+        description:
+            - WIP
+        type: str
+        required: false
+    ssh_signed_cert:
+        description:
+            - WIP
+        type: str
+        required: false
+    ssl_dashboard_port:
+        description:
+            - WIP
+        type: str
+        required: false
+    with_centralized_logging:
+        description:
+            - WIP
+        type: bool
+        required: false
+    call_home_config:
+        description:
+            - WIP
+            - IBM only
+        type: str
+        required: false
+    call_home_icn:
+        description:
+            - WIP
+            - IBM only
+        type: str
+        required: false
+    ceph_call_home_contact_email:
+        description:
+            - WIP
+            - IBM only
+        type: str
+        required: false
+    ceph_call_home_contact_first_name:
+        description:
+            - WIP
+            - IBM only
+        type: str
+        required: false
+    ceph_call_home_contact_last_name:
+        description:
+            - WIP
+            - IBM only
+        type: str
+        required: false
+    ceph_call_home_contact_phone:
+        description:
+            - WIP
+            - IBM only
+        type: str
+        required: false
+    ceph_call_home_country_code:
+        description:
+            - WIP
+            - IBM only
+        type: str
+        required: false
+    deploy_cephadm_agent:
+        description:
+            - WIP
+            - IBM only
+        type: bool
+        required: false
+    enable_ibm_call_home:
+        description:
+            - WIP
+            - IBM only
+        type: bool
+        required: false
+    enable_storage_insights:
+        description:
+            - WIP
+            - IBM only
+        type: bool
+        required: false
+    storage_insights_config:
+        description:
+            - WIP
+            - IBM only
+        type: str
+        required: false
+    storage_insights_tenant_id:
+        description:
+            - WIP
+            - IBM only
+        type: str
         required: false
 author:
-    - Dimitri Savineau <dsavinea@redhat.com>
-    - Teoman ONAY <tonay@ibm.com>
+    - Dimitri Savineau (@dsavineau)
+    - Teoman ONAY (@asm0deuz)
 '''
 
 EXAMPLES = '''
@@ -153,16 +410,24 @@ EXAMPLES = '''
 
 RETURN = '''#  '''
 
+import datetime
+import os
+
+from ansible.module_utils.basic import AnsibleModule  # type: ignore
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module  # type: ignore
+except ImportError:
+    from module_utils.ceph_common import exit_module
+
 
 def run_module() -> None:
 
     backward_compat = dict(
-        dashboard=dict(type='bool', required=False, remove_in_version='4.0.0'),
-        firewalld=dict(type='bool', required=False, remove_in_version='4.0.0'),
+        dashboard=dict(type='bool', required=False),
+        firewalld=dict(type='bool', required=False),
         monitoring=dict(type='bool',
-                        required=False,
-                        remove_in_version='4.0.0'),
-        pull=dict(type='bool', required=False, remove_in_version='4.0.0'),
+                        required=False),
+        pull=dict(type='bool', required=False),
         dashboard_password=dict(type='str',
                                 required=False,
                                 no_log=True),
@@ -196,8 +461,8 @@ def run_module() -> None:
         apply_spec=dict(type='str', required=False),
         cluster_network=dict(type='str', required=False),
         config=dict(type='str', required=False),
-        dashboard_crt=dict(type='str', required=False),
-        dashboard_key=dict(type='str', required=False),
+        dashboard_crt=dict(type='str', required=False, no_log=False),
+        dashboard_key=dict(type='str', required=False, no_log=False),
         dashboard_password_noupdate=dict(type='bool', required=False),
         fsid=dict(type='str', required=False),
         initial_dashboard_password=dict(type='str',
@@ -208,14 +473,14 @@ def run_module() -> None:
         mgr_id=dict(type='str', required=False),
         mon_addrv=dict(type='str', required=False),
         mon_id=dict(type='str', required=False),
-        mon_ip=dict(type='str', required=False),
+        mon_ip=dict(type='str', required=True),
         no_cleanup_on_failure=dict(type='bool', required=False),
         no_minimize_config=dict(type='bool', required=False),
         orphan_initial_daemons=dict(type='bool', required=False),
         output_config=dict(type='str', required=False),
         output_dir=dict(type='str', required=False),
-        output_keyring=dict(type='str', required=False),
-        output_pub_ssh_key=dict(type='str', required=False),
+        output_keyring=dict(type='str', required=False, no_log=False),
+        output_pub_ssh_key=dict(type='str', required=False, no_log=False),
         registry_json=dict(type='str', required=False),
         registry_password=dict(type='str', required=False, no_log=True),
         registry_url=dict(type='str', required=False),
@@ -232,7 +497,7 @@ def run_module() -> None:
         skip_pull=dict(type='bool', required=False),
         skip_ssh=dict(type='bool', required=False),
         ssh_config=dict(type='str', required=False),
-        ssh_private_key=dict(type='str', required=False),
+        ssh_private_key=dict(type='str', required=False, no_log=False),
         ssh_public_key=dict(type='str', required=False),
         ssh_signed_cert=dict(type='str', required=False),
         ssh_user=dict(type='str', required=False),
