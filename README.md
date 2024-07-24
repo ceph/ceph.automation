@@ -4,7 +4,7 @@ This repository contains the `ceph.automation` Ansible Collection.
 
 ## Tested with Ansible
 
-Tested with ansible-core >=2.14 releases and the current development version of ansible-core.
+Tested with ansible-core >=2.15 releases and the current development version of ansible-core.
 
 ## External requirements
 
@@ -12,7 +12,7 @@ Some modules and plugins require external libraries. Please check the requiremen
 
 ## Included content
 
-Please check the included content on the [Ansible Galaxy page for this collection](https://galaxy.ansible.com/ceph/ansible).
+Please check the included content on the [Ansible Galaxy page for this collection](https://galaxy.ansible.com/ui/repo/published/ceph/automation).
 
 ## Using this collection
 
@@ -33,7 +33,7 @@ To upgrade the collection to the latest available version, run the following com
 ansible-galaxy collection install ceph.automation --upgrade
 ```
 
-You can also install a specific version of the collection, for example, if you need to downgrade when something is broken in the latest version (please report an issue in this repository). Use the following syntax where `X.Y.Z` can be any [available version](https://galaxy.ansible.com/ceph/ansible):
+You can also install a specific version of the collection, for example, if you need to downgrade when something is broken in the latest version (please report an issue in this repository). Use the following syntax where `X.Y.Z` can be any [available version](https://galaxy.ansible.com/ui/repo/published/ceph/automation):
 
 ```bash
 ansible-galaxy collection install ceph.automation:==X.Y.Z
@@ -43,7 +43,7 @@ See [Ansible Using collections](https://docs.ansible.com/ansible/latest/user_gui
 
 ## Release notes
 
-See the [changelog](https://github.com/ansible-collections/REPONAMEHERE/tree/main/CHANGELOG.rst).
+See the [changelog](https://github.com/ceph/ceph.automation/blob/main/CHANGELOG.rst).
 
 ## Roadmap
 

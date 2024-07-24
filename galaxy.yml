@@ -5,7 +5,7 @@
 
 namespace: "ceph"
 name: "automation"
-version: 1.0.0
+version: 1.0.1
 readme: README.md
 authors:
   - Teoman ONAY <tonay@ibm.com>
@@ -16,10 +16,10 @@ license_file: LICENSE
 tags: ["linux", "tools"]
 dependencies: {}
 
-repository: http://example.com/repository
-documentation: http://docs.example.com
-homepage: http://example.com
-issues: http://example.com/issue/tracker
+repository: https://github.com/ceph/ceph.automation
+documentation: https://docs.ceph.com/projects/ceph.automation
+homepage: https://github.com/ceph/ceph.automation
+issues: https://github.com/ceph/ceph.automation/issues
 
 # A list of file glob-like patterns used to filter any files or directories that should not be included in the build
 # artifact. A pattern is matched from the relative path of the file or directory of the collection directory. This
