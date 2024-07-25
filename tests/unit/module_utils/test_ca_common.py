@@ -1,6 +1,6 @@
 from mock.mock import patch, MagicMock
 import os
-import ca_common
+from ansible_collections.ceph.automation.plugins.module_utils import ceph_common
 import pytest
 
 fake_container_binary = 'podman'
@@ -26,15 +26,15 @@ class TestCommon(object):
 
     @patch.dict(os.environ, {'CEPH_CONTAINER_BINARY': fake_container_binary})
     def test_container_exec(self):
-        cmd = ca_common.container_exec(self.fake_binary, fake_container_image)
+        cmd = ceph_common.container_exec(self.fake_binary, fake_container_image)
         assert cmd == self.fake_container_cmd
 
     def test_not_is_containerized(self):
-        assert ca_common.is_containerized() is None
+        assert ceph_common.is_containerized() is None
 
     @patch.dict(os.environ, {'CEPH_CONTAINER_IMAGE': fake_container_image})
     def test_is_containerized(self):
-        assert ca_common.is_containerized() == fake_container_image
+        assert ceph_common.is_containerized() == fake_container_image
 
     @pytest.mark.parametrize('image', [None, fake_container_image])
     @patch.dict(os.environ, {'CEPH_CONTAINER_BINARY': fake_container_binary})
@@ -44,7 +44,7 @@ class TestCommon(object):
         else:
             expected_cmd = [self.fake_binary]
 
-        assert ca_common.pre_generate_cmd(self.fake_binary, image) == expected_cmd  # noqa: E501
+        assert ceph_common.pre_generate_cmd(self.fake_binary, image) == expected_cmd  # noqa: E501
 
     @pytest.mark.parametrize('image', [None, fake_container_image])
     @patch.dict(os.environ, {'CEPH_CONTAINER_BINARY': fake_container_binary})
@@ -64,7 +64,7 @@ class TestCommon(object):
             'osd', 'pool',
             'create', 'foo'
         ])
-        assert ca_common.generate_cmd(sub_cmd=sub_cmd, args=args, cluster=self.fake_cluster, container_image=image) == expected_cmd  # noqa: E501
+        assert ceph_common.generate_cmd(sub_cmd=sub_cmd, args=args, cluster=self.fake_cluster, container_image=image) == expected_cmd  # noqa: E501
 
     @pytest.mark.parametrize('image', [None, fake_container_image])
     @patch.dict(os.environ, {'CEPH_CONTAINER_BINARY': fake_container_binary})
@@ -84,7 +84,7 @@ class TestCommon(object):
             'osd', 'pool',
             'create', 'foo'
         ])
-        result = ca_common.generate_cmd(sub_cmd=sub_cmd, args=args, cluster='foo', container_image=image)  # noqa: E501
+        result = ceph_common.generate_cmd(sub_cmd=sub_cmd, args=args, cluster='foo', container_image=image)  # noqa: E501
         assert result == expected_cmd
 
     @pytest.mark.parametrize('image', [None, fake_container_image])
@@ -105,7 +105,7 @@ class TestCommon(object):
             'osd', 'pool',
             'create', 'foo'
         ])
-        result = ca_common.generate_cmd(sub_cmd=sub_cmd, args=args, cluster='foo', user='client.foo', container_image=image)  # noqa: E501
+        result = ceph_common.generate_cmd(sub_cmd=sub_cmd, args=args, cluster='foo', user='client.foo', container_image=image)  # noqa: E501
         assert result == expected_cmd
 
     @pytest.mark.parametrize('image', [None, fake_container_image])
@@ -126,7 +126,7 @@ class TestCommon(object):
             'osd', 'pool',
             'create', 'foo'
         ])
-        result = ca_common.generate_cmd(sub_cmd=sub_cmd, args=args, user='client.foo', container_image=image)  # noqa: E501
+        result = ceph_common.generate_cmd(sub_cmd=sub_cmd, args=args, user='client.foo', container_image=image)  # noqa: E501
         assert result == expected_cmd
 
     @pytest.mark.parametrize('stdin', [None, 'foo'])
@@ -137,7 +137,7 @@ class TestCommon(object):
         stdout = 'ceph version 1.2.3'
         fake_module.run_command.return_value = 0, stdout, stderr
         expected_cmd = [self.fake_binary, '--version']
-        _rc, _cmd, _out, _err = ca_common.exec_command(fake_module, expected_cmd, stdin=stdin)  # noqa: E501
+        _rc, _cmd, _out, _err = ceph_common.exec_command(fake_module, expected_cmd, stdin=stdin)  # noqa: E501
         assert _rc == rc
         assert _cmd == expected_cmd
         assert _err == stderr

@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2020, Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,18 +18,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, \
-                                               generate_cmd, \
-                                               is_containerized
-except ImportError:
-    from module_utils.ca_common import exit_module, \
-                                       generate_cmd, \
-                                       is_containerized
-import datetime
-
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -37,28 +28,30 @@ DOCUMENTATION = '''
 ---
 module: ceph_mgr_module
 short_description: Manage Ceph MGR module
-version_added: "2.8"
+version_added: "1.1.0"
 description:
     - Manage Ceph MGR module
 options:
     name:
         description:
             - name of the ceph MGR module.
+        type: str
         required: true
     cluster:
         description:
             - The ceph cluster name.
+        type: str
         required: false
         default: ceph
     state:
         description:
-            - If 'enable' is used, the module enables the MGR module.
-            If 'absent' is used, the module disables the MGR module.
+            - If 'enable' is used, the module enables the MGR module. If 'absent' is used, the module disables the MGR module.
+        type: str
         required: false
         choices: ['enable', 'disable']
         default: enable
 author:
-    - Dimitri Savineau <dsavinea@redhat.com>
+    - Dimitri Savineau (@dsavineau)
 '''
 
 EXAMPLES = '''
@@ -69,7 +62,7 @@ EXAMPLES = '''
 
 - name: disable multiple mgr modules
   ceph_mgr_module:
-    name: '{{ item }}'
+    name: name
     state: disable
   loop:
     - 'dashboard'
@@ -77,6 +70,18 @@ EXAMPLES = '''
 '''
 
 RETURN = '''#  '''
+
+from ansible.module_utils.basic import AnsibleModule
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, \
+        generate_cmd, \
+        is_containerized
+except ImportError:
+    from module_utils.ceph_common import exit_module, \
+        generate_cmd, \
+        is_containerized
+
+import datetime
 
 
 def main():

@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2018, Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,26 +18,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import generate_cmd, \
-                                               is_containerized, \
-                                               container_exec, \
-                                               fatal
-except ImportError:
-    from module_utils.ca_common import generate_cmd, \
-                                       is_containerized, \
-                                       container_exec, \
-                                       fatal
-import datetime
-import json
-import os
-import struct
-import time
-import base64
-import socket
-
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -45,101 +28,121 @@ DOCUMENTATION = '''
 ---
 module: ceph_key
 
-author: Sebastien Han <seb@redhat.com>
+author: Sebastien Han (@leseb)
 
 short_description: Manage Cephx key(s)
 
-version_added: "2.6"
+version_added: "1.1.0"
 
 description:
-    - Manage CephX creation, deletion and updates.
-    It can also list and get information about keyring(s).
+    - Manage CephX creation, deletion and updates. It can also list and get information about keyring(s).
 options:
     cluster:
         description:
             - The ceph cluster name.
+        type: str
         required: false
         default: ceph
     name:
         description:
             - name of the CephX key
-        required: true
+        type: str
+        required: false
     user:
         description:
-            - entity used to perform operation.
-            It corresponds to the -n option (--name)
+            - entity used to perform operation. It corresponds to the -n option (--name)
+        type: str
         required: false
+        default: 'client.admin'
     user_key:
         description:
-            - the path to the keyring corresponding to the
-            user being used.
-            It corresponds to the -k option (--keyring)
+            - the path to the keyring corresponding to the user being used. It corresponds to the -k option (--keyring)
+        type: str
+        required: false
     state:
         description:
-            - If 'present' is used, the module creates a keyring
-            with the associated capabilities.
-            If 'present' is used and a secret is provided the module
-            will always add the key. Which means it will update
-            the keyring if the secret changes, the same goes for
-            the capabilities.
-            If 'absent' is used, the module will simply delete the keyring.
-            If 'list' is used, the module will list all the keys and will
-            return a json output.
-            If 'info' is used, the module will return in a json format the
-            description of a given keyring.
-            If 'generate_secret' is used, the module will simply output a cephx keyring.
+            - If 'present' is used, the module creates a keyring with the associated capabilities.
+            - If 'present' is used and a secret is provided the module will always add the key. Which means it will update the keyring if the secret changes, the same goes for the capabilities.  # noqa: E501
+            - If 'absent' is used, the module will simply delete the keyring.
+            - If 'generate_secret' is used, the module will simply output a cephx keyring.
+        type: str
         required: false
-        choices: ['present', 'update', 'absent', 'list', 'info', 'fetch_initial_keys', 'generate_secret']
+        choices: ['present', 'update', 'absent', 'fetch_initial_keys', 'generate_secret']
         default: present
     caps:
         description:
             - CephX key capabilities
-        default: None
+        type: dict
         required: false
     secret:
         description:
             - keyring's secret value
+        type: str
         required: false
-        default: None
     import_key:
         description:
             - Wether or not to import the created keyring into Ceph.
-            This can be useful for someone that only wants to generate keyrings
-            but not add them into Ceph.
+            - This can be useful for someone that only wants to generate keyrings but not add them into Ceph.
+        type: bool
         required: false
-        default: True
+        default: true
     dest:
         description:
             - Destination to write the keyring, can a file or a directory
+        type: str
         required: false
         default: /etc/ceph/
-    fetch_initial_keys:
-        description:
-            - Fetch client.admin and bootstrap key.
-            This is only needed for Nautilus and above.
-            Writes down to the filesystem the initial keys generated by the monitor.  # noqa: E501
-            This command can ONLY run from a monitor node.
-        required: false
-        default: false
     output_format:
         description:
-            - The key output format when retrieving the information of an
-            entity.
+            - The key output format when retrieving the information of an entity.
+        type: str
+        choices: ['json', 'plain', 'xml', 'yaml']
         required: false
         default: json
+    mode:
+        description:
+            - N/A
+        type: raw
+    owner:
+        description:
+            - N/A
+        type: str
+    group:
+        description:
+            - N/A
+        type: str
+    seuser:
+        description:
+            - N/A
+        type: str
+    serole:
+        description:
+            - N/A
+        type: str
+    selevel:
+        description:
+            - N/A
+        type: str
+    setype:
+        description:
+            - N/A
+        type: str
+    attributes:
+        description:
+            - N/A
+        type: str
+        aliases:
+            - attr
+    unsafe_writes:
+        description:
+            - N/A
+        type: bool
+        default: false
 '''
 
 EXAMPLES = '''
 
-keys_to_create:
-  - { name: client.key, key: "AQAin8tUUK84ExAA/QgBtI7gEMWdmnvKBzlXdQ==", caps: { mon: "allow rwx", mds: "allow *" } , mode: "0600" }  # noqa: E501
-  - { name: client.cle, caps: { mon: "allow r", osd: "allow *" } , mode: "0600" }  # noqa: E501
-
-caps:
-  mon: "allow rwx"
-  mds: "allow *"
-
-- name: create ceph admin key
+- name: Create ceph admin key
   ceph_key:
     name: client.admin
     state: present
@@ -149,10 +152,9 @@ caps:
       osd: allow *
       mgr: allow *
       mds: allow
-    mode: 0400
-    import_key: False
+    import_key: false
 
-- name: create monitor initial keyring
+- name: Create monitor initial keyring
   ceph_key:
     name: mon.
     state: present
@@ -160,51 +162,59 @@ caps:
     caps:
       mon: allow *
     dest: "/var/lib/ceph/tmp/"
-    import_key: False
+    import_key: false
 
-- name: create cephx key
+- name: Create cephx key
   ceph_key:
-    name: "{{ keys_to_create }}"
+    name: client.key
     user: client.bootstrap-rgw
     user_key: /var/lib/ceph/bootstrap-rgw/ceph.keyring
     state: present
-    caps: "{{ caps }}"
+    caps: 'mon: "allow rwx"'
 
-- name: create cephx key but don't import it in Ceph
+- name: Create cephx key but don't import it in Ceph
   ceph_key:
-    name: "{{ keys_to_create }}"
+    name: client.key
     state: present
-    caps: "{{ caps }}"
-    import_key: False
+    caps: 'mon: "allow r"'
+    import_key: false
 
-- name: delete cephx key
+- name: Delete cephx key
   ceph_key:
     name: "my_key"
     state: absent
 
-- name: info cephx key
-  ceph_key:
-    name: "my_key""
-    state: info
-
-- name: info cephx admin key (plain)
+- name: Info cephx admin key (plain)
   ceph_key:
     name: client.admin
     output_format: plain
     state: info
   register: client_admin_key
 
-- name: list cephx keys
-  ceph_key:
-    state: list
-
-- name: fetch cephx keys
+- name: Fetch cephx keys
   ceph_key:
     state: fetch_initial_keys
 '''
 
 RETURN = '''#  '''
 
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import generate_cmd, is_containerized, container_exec, fatal  # type: ignore
+except ImportError:
+    from module_utils.ceph_common import generate_cmd, is_containerized, container_exec, fatal
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_key_common import exec_commands
+except ImportError:
+    from module_utils.ceph_key_common import exec_commands
+
+import json
+import os
+import struct
+import time
+import base64
+import datetime
+import socket
+from ansible.module_utils.basic import AnsibleModule  # type: ignore
 
 CEPH_INITIAL_KEYS = ['client.admin', 'client.bootstrap-mds', 'client.bootstrap-mgr',  # noqa: E501
                      'client.bootstrap-osd', 'client.bootstrap-rbd', 'client.bootstrap-rbd-mirror', 'client.bootstrap-rgw']  # noqa: E501
@@ -414,19 +424,6 @@ def list_keys(cluster, user, user_key, container_image=None):
     return cmd_list
 
 
-def exec_commands(module, cmd_list):
-    '''
-    Execute command(s)
-    '''
-
-    for cmd in cmd_list:
-        rc, out, err = module.run_command(cmd)
-        if rc != 0:
-            return rc, cmd, out, err
-
-    return rc, cmd, out, err
-
-
 def lookup_ceph_initial_entities(module, out):
     '''
     Lookup Ceph initial keys entries in the auth map
@@ -487,14 +484,15 @@ def run_module():
         cluster=dict(type='str', required=False, default='ceph'),
         name=dict(type='str', required=False),
         state=dict(type='str', required=False, default='present', choices=['present', 'update', 'absent',  # noqa: E501
-                                                                           'list', 'info', 'fetch_initial_keys', 'generate_secret']),  # noqa: E501
+                                                                           'fetch_initial_keys', 'generate_secret']),  # noqa: E501
         caps=dict(type='dict', required=False, default=None),
         secret=dict(type='str', required=False, default=None, no_log=True),
-        import_key=dict(type='bool', required=False, default=True),
+        import_key=dict(type='bool', required=False,
+                        default=True, no_log=False),
         dest=dict(type='str', required=False, default='/etc/ceph/'),
         user=dict(type='str', required=False, default='client.admin'),
-        user_key=dict(type='str', required=False, default=None),
-        output_format=dict(type='str', required=False, default='json', choices=['json', 'plain', 'xml', 'yaml'])  # noqa: E501
+        user_key=dict(type='str', required=False, default=None, no_log=False),
+        output_format=dict(type='str', required=False, default='json', choices=['json', 'plain', 'xml', 'yaml']),  # noqa: E501
     )
 
     module = AnsibleModule(
@@ -518,10 +516,11 @@ def run_module():
     output_format = module.params.get('output_format')
 
     # Can't use required_if with 'name' for some reason...
-    if state in ['present', 'absent', 'update', 'info'] and not name:
+    if state in ['present', 'absent', 'update'] and not name:
         fatal(f'"state" is "{state}" but "name" is not defined.', module)
 
     changed = False
+    cmd = ''
 
     result = dict(
         changed=changed,
@@ -625,14 +624,6 @@ def run_module():
             changed = True
         else:
             rc = 0
-
-    elif state == "info":
-        rc, cmd, out, err = exec_commands(
-            module, info_key(cluster, name, user, user_key_path, output_format, container_image))  # noqa: E501
-
-    elif state == "list":
-        rc, cmd, out, err = exec_commands(
-            module, list_keys(cluster, user, user_key_path, container_image))
 
     elif state == "fetch_initial_keys":
         hostname = socket.gethostname().split('.', 1)[0]

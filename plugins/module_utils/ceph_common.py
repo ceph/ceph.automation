@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import datetime
+import os
 import time
 from typing import TYPE_CHECKING, Any, List, Dict, Callable, Type, TypeVar, Optional
 
@@ -9,6 +10,7 @@ if TYPE_CHECKING:
     from ansible.module_utils.basic import AnsibleModule  # type: ignore
 
 ExceptionType = TypeVar('ExceptionType', bound=BaseException)
+
 
 def generate_cmd(cmd='ceph',
                  sub_cmd=None,

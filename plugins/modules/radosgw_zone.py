@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2020, Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,16 +18,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import fatal
-except ImportError:
-    from module_utils.ca_common import fatal
-import datetime
-import json
-import os
-
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -37,7 +30,7 @@ module: radosgw_zone
 
 short_description: Manage RADOS Gateway Zone
 
-version_added: "2.8"
+version_added: "1.1.0"
 
 description:
     - Manage RADOS Gateway zone(s) creation, deletion and updates.
@@ -45,58 +38,71 @@ options:
     cluster:
         description:
             - The ceph cluster name.
+        type: str
         required: false
         default: ceph
     name:
         description:
             - name of the RADOS Gateway zone.
+        type: str
         required: true
     state:
         description:
-            If 'present' is used, the module creates a zone if it doesn't
-            exist or update it if it already exists.
-            If 'absent' is used, the module will simply delete the zone.
-            If 'info' is used, the module will return all details about the
-            existing zone (json formatted).
+            - If 'present' is used, the module creates a zone if it doesn't exist or update it if it already exists.
+            - If 'absent' is used, the module will simply delete the zone.
+            - If 'info' is used, the module will return all details about the existing zone (json formatted).
+        type: str
         required: false
-        choices: ['present', 'absent', 'info']
+        choices: ['present', 'absent', 'set']
         default: present
     realm:
         description:
             - name of the RADOS Gateway realm.
+        type: str
         required: true
     zonegroup:
         description:
             - name of the RADOS Gateway zonegroup.
+        type: str
         required: true
     endpoints:
         description:
             - endpoints of the RADOS Gateway zone.
+        type: list
+        elements: str
         required: false
         default: []
     access_key:
         description:
             - set the S3 access key of the user.
+        type: str
         required: false
-        default: None
     secret_key:
         description:
             - set the S3 secret key of the user.
+        type: str
         required: false
-        default: None
     default:
         description:
             - set the default flag on the zone.
+        type: bool
         required: false
         default: false
     master:
         description:
             - set the master flag on the zone.
+        type: bool
         required: false
         default: false
+    zone_doc:
+        description:
+            - TBD
+        type: dict
+        required: false
+        default: {}
 
 author:
-    - Dimitri Savineau <dsavinea@redhat.com>
+    - Dimitri Savineau (@dsavineau)
 '''
 
 EXAMPLES = '''
@@ -123,8 +129,17 @@ EXAMPLES = '''
 
 RETURN = '''#  '''
 
+from ansible.module_utils.basic import AnsibleModule
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import fatal
+except ImportError:
+    from module_utils.ceph_common import fatal
+import datetime
+import json
+import os
 
-def container_exec(binary, container_image, container_args=[]):
+
+def container_exec(binary, container_image, container_args=None):
     '''
     Build the docker CLI to run a command inside a container
     '''
@@ -132,7 +147,8 @@ def container_exec(binary, container_image, container_args=[]):
     container_binary = os.getenv('CEPH_CONTAINER_BINARY')
 
     command_exec = [container_binary, 'run', '--rm', '--net=host']
-    command_exec.extend(container_args)
+    if container_args:
+        command_exec.extend(container_args)
     command_exec.extend([
         '-v', '/etc/ceph:/etc/ceph:z',
         '-v', '/var/lib/ceph/:/var/lib/ceph/:z',
@@ -157,7 +173,7 @@ def is_containerized():
     return container_image
 
 
-def pre_generate_radosgw_cmd(container_image=None, container_args=[]):
+def pre_generate_radosgw_cmd(container_image=None, container_args=None):
     '''
     Generate radosgw-admin prefix comaand
     '''
@@ -169,7 +185,7 @@ def pre_generate_radosgw_cmd(container_image=None, container_args=[]):
     return cmd
 
 
-def generate_radosgw_cmd(cluster, args, container_image=None, container_args=[]):
+def generate_radosgw_cmd(cluster, args, container_image=None, container_args=None):
     '''
     Generate 'radosgw' command line to execute
     '''
@@ -438,10 +454,10 @@ def run_module():
     module_args = dict(
         cluster=dict(type='str', required=False, default='ceph'),
         name=dict(type='str', required=True),
-        state=dict(type='str', required=False, choices=['present', 'absent', 'info', 'set'], default='present'),  # noqa: E501
-        realm=dict(type='str', require=True),
-        zonegroup=dict(type='str', require=True),
-        endpoints=dict(type='list', require=False, default=[]),
+        state=dict(type='str', required=False, choices=['present', 'absent', 'set'], default='present'),  # noqa: E501
+        realm=dict(type='str', required=True),
+        zonegroup=dict(type='str', required=True),
+        endpoints=dict(type='list', elements='str', required=False, default=[]),
         access_key=dict(type='str', required=False, no_log=True),
         secret_key=dict(type='str', required=False, no_log=True),
         default=dict(type='bool', required=False, default=False),

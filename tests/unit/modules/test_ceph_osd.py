@@ -1,14 +1,14 @@
 from mock.mock import patch
 import os
 import pytest
-import ca_test_common
-import ceph_osd
+from ansible_collections.ceph.automation.tests.unit.modules import ca_test_common
+from ansible_collections.ceph.automation.plugins.modules import ceph_osd
 
 fake_cluster = 'ceph'
 fake_container_binary = 'podman'
 fake_container_image = 'quay.io/ceph/daemon:latest'
-fake_id = '42'
-fake_ids = ['0', '7', '13']
+fake_id = 42
+fake_ids = [0, 7, 13]
 fake_user = 'client.admin'
 fake_keyring = '/etc/ceph/{}.{}.keyring'.format(fake_cluster, fake_user)
 invalid_state = 'foo'

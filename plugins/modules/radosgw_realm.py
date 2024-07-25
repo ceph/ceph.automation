@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2020, Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,11 +18,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-import datetime
-import os
-
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -32,7 +30,7 @@ module: radosgw_realm
 
 short_description: Manage RADOS Gateway Realm
 
-version_added: "2.8"
+version_added: "1.1.0"
 
 description:
     - Manage RADOS Gateway realm(s) creation, deletion and updates.
@@ -40,42 +38,47 @@ options:
     cluster:
         description:
             - The ceph cluster name.
+        type: str
         required: false
         default: ceph
     name:
         description:
             - name of the RADOS Gateway realm.
+        type: str
         required: true
     state:
         description:
-            If 'present' is used, the module creates a realm if it doesn't
-            exist or update it if it already exists.
-            If 'absent' is used, the module will simply delete the realm.
-            If 'info' is used, the module will return all details about the
-            existing realm (json formatted).
+            - If 'present' is used, the module creates a realm if it doesn't exist or update it if it already exists.
+            - If 'absent' is used, the module will simply delete the realm.
+            - If 'info' is used, the module will return all details about the existing realm (json formatted).
+        type: str
         required: false
-        choices: ['present', 'absent', 'info']
+        choices: ['present', 'absent', 'pull']
         default: present
     default:
         description:
             - set the default flag on the realm.
+        type: bool
         required: false
         default: false
     url:
         description:
             - URL to the master RADOS Gateway zone.
+        type: str
         required: false
     access_key:
         description:
             - S3 access key of the master RADOS Gateway zone.
+        type: str
         required: false
     secret_key:
         description:
             - S3 secret key of the master RADOS Gateway zone.
+        type: str
         required: false
 
 author:
-    - Dimitri Savineau <dsavinea@redhat.com>
+    - Dimitri Savineau (@dsavineau)
 '''
 
 EXAMPLES = '''
@@ -96,6 +99,10 @@ EXAMPLES = '''
 '''
 
 RETURN = '''#  '''
+
+from ansible.module_utils.basic import AnsibleModule
+import datetime
+import os
 
 
 def container_exec(binary, container_image):
@@ -270,11 +277,11 @@ def run_module():
     module_args = dict(
         cluster=dict(type='str', required=False, default='ceph'),
         name=dict(type='str', required=True),
-        state=dict(type='str', required=False, choices=['present', 'absent', 'info', 'pull'], default='present'),  # noqa: E501
+        state=dict(type='str', required=False, choices=['present', 'absent', 'pull'], default='present'),  # noqa: E501
         default=dict(type='bool', required=False, default=False),
         url=dict(type='str', required=False),
-        access_key=dict(type='str', required=False),
-        secret_key=dict(type='str', required=False),
+        access_key=dict(type='str', required=False, no_log=False),
+        secret_key=dict(type='str', required=False, no_log=False),
     )
 
     module = AnsibleModule(

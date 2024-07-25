@@ -1,9 +1,8 @@
 import os
-import sys
 from mock.mock import patch, MagicMock
 import pytest
-sys.path.append('./library')
-import radosgw_zone  # noqa: E402
+# sys.path.append('./library')
+from ansible_collections.ceph.automation.plugins.modules import radosgw_zone
 
 
 fake_binary = 'radosgw-admin'
@@ -73,7 +72,7 @@ class TestRadosgwZoneModule(object):
         ])
         assert radosgw_zone.generate_radosgw_cmd(fake_cluster, [], image) == expected_cmd
 
-    @pytest.mark.parametrize('image', fake_container_image)
+    @pytest.mark.parametrize('image', [fake_container_image])
     @patch.dict(os.environ, {'CEPH_CONTAINER_BINARY': fake_container_binary})
     def test_generate_radosgw_cmd_container_args(self, image):
         container_args = [

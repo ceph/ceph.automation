@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2020, Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,15 +18,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module
-except ImportError:
-    from module_utils.ca_common import exit_module
-import datetime
-import json
-
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -34,44 +28,52 @@ DOCUMENTATION = '''
 ---
 module: cephadm_adopt
 short_description: Adopt a Ceph cluster with cephadm
-version_added: "2.8"
+version_added: "1.1.0"
 description:
     - Adopt a Ceph cluster with cephadm
 options:
     name:
         description:
             - The ceph daemon name.
+        type: str
         required: true
     cluster:
         description:
             - The ceph cluster name.
+        type: str
         required: false
         default: ceph
     style:
         description:
             - Cep deployment style.
+        type: str
         required: false
         default: legacy
     image:
         description:
             - Ceph container image.
+        type: str
         required: false
     docker:
         description:
             - Use docker instead of podman.
+        type: bool
         required: false
+        default: false
     pull:
         description:
             - Pull the Ceph container image.
+        type: bool
         required: false
         default: true
     firewalld:
         description:
             - Manage firewall rules with firewalld.
+        type: bool
         required: false
         default: true
 author:
-    - Dimitri Savineau <dsavinea@redhat.com>
+    - Dimitri Savineau (@dsavineau)
 '''
 
 EXAMPLES = '''
@@ -98,6 +100,14 @@ EXAMPLES = '''
 
 RETURN = '''#  '''
 
+from ansible.module_utils.basic import AnsibleModule  # type: ignore
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module  # type: ignore
+except ImportError:
+    from module_utils.ceph_common import exit_module
+import datetime
+import json
+
 
 def main():
     module = AnsibleModule(
@@ -122,6 +132,8 @@ def main():
     firewalld = module.params.get('firewalld')
 
     startd = datetime.datetime.now()
+    rc = 0
+    err = ''
 
     cmd = ['cephadm', 'ls', '--no-detail']
 

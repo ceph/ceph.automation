@@ -1,7 +1,7 @@
 from mock.mock import patch
 import pytest
-import ca_test_common
-import cephadm_adopt
+from ansible_collections.ceph.automation.tests.unit.modules import ca_test_common
+from ansible_collections.ceph.automation.plugins.modules import cephadm_adopt
 
 fake_cluster = 'ceph'
 fake_image = 'quay.io/ceph/daemon-base:latest'
@@ -65,13 +65,13 @@ class TestCephadmAdoptModule(object):
             'name': fake_name
         })
         m_exit_json.side_effect = ca_test_common.exit_json
-        stdout = 'Stopping old systemd unit ceph-mon@{}...\n' \
-                 'Disabling old systemd unit ceph-mon@{}...\n' \
+        stdout = f'Stopping old systemd unit ceph-mon@{fake_name}...\n' \
+                 'Disabling old systemd unit ceph-mon@{fake_name}...\n' \
                  'Moving data...\n' \
                  'Chowning content...\n' \
                  'Moving logs...\n' \
                  'Creating new units...\n' \
-                 'firewalld ready'.format(fake_name, fake_name)
+                 'firewalld ready'
         stderr = ''
         rc = 0
         m_run_command.side_effect = [
@@ -84,7 +84,8 @@ class TestCephadmAdoptModule(object):
 
         result = result.value.args[0]
         assert result['changed']
-        assert result['cmd'] == ['cephadm', 'adopt', '--cluster', fake_cluster, '--name', fake_name, '--style', 'legacy']
+        assert result['cmd'] == ['cephadm', 'adopt', '--cluster',
+                                 fake_cluster, '--name', fake_name, '--style', 'legacy']
         assert result['rc'] == 0
         assert result['stderr'] == stderr
         assert result['stdout'] == stdout
@@ -132,7 +133,8 @@ class TestCephadmAdoptModule(object):
 
         result = result.value.args[0]
         assert result['changed']
-        assert result['cmd'] == ['cephadm', '--docker', 'adopt', '--cluster', fake_cluster, '--name', fake_name, '--style', 'legacy']
+        assert result['cmd'] == ['cephadm', '--docker', 'adopt', '--cluster',
+                                 fake_cluster, '--name', fake_name, '--style', 'legacy']
         assert result['rc'] == 0
 
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
@@ -156,7 +158,8 @@ class TestCephadmAdoptModule(object):
 
         result = result.value.args[0]
         assert result['changed']
-        assert result['cmd'] == ['cephadm', '--image', fake_image, 'adopt', '--cluster', fake_cluster, '--name', fake_name, '--style', 'legacy']
+        assert result['cmd'] == ['cephadm', '--image', fake_image, 'adopt',
+                                 '--cluster', fake_cluster, '--name', fake_name, '--style', 'legacy']
         assert result['rc'] == 0
 
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
@@ -180,7 +183,8 @@ class TestCephadmAdoptModule(object):
 
         result = result.value.args[0]
         assert result['changed']
-        assert result['cmd'] == ['cephadm', 'adopt', '--cluster', fake_cluster, '--name', fake_name, '--style', 'legacy', '--skip-pull']
+        assert result['cmd'] == ['cephadm', 'adopt', '--cluster', fake_cluster,
+                                 '--name', fake_name, '--style', 'legacy', '--skip-pull']
         assert result['rc'] == 0
 
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
@@ -204,5 +208,6 @@ class TestCephadmAdoptModule(object):
 
         result = result.value.args[0]
         assert result['changed']
-        assert result['cmd'] == ['cephadm', 'adopt', '--cluster', fake_cluster, '--name', fake_name, '--style', 'legacy', '--skip-firewalld']
+        assert result['cmd'] == ['cephadm', 'adopt', '--cluster', fake_cluster,
+                                 '--name', fake_name, '--style', 'legacy', '--skip-firewalld']
         assert result['rc'] == 0

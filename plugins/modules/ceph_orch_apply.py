@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright Red Hat
 # SPDX-License-Identifier: Apache-2.0
 # Author: Guillaume Abrioux <gabrioux@redhat.com>
