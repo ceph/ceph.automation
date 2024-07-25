@@ -1,18 +1,22 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-# Copyright (c) 2018 Red Hat, Inc.
+# Copyright 2018, Red Hat, Inc.
 #
-# GNU General Public License v3.0+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
-from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import fatal
-except ImportError:
-    from module_utils.ca_common import fatal
-import datetime
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -23,34 +27,28 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: ceph_crush
-
-author: Sebastien Han <seb@redhat.com>
-
 short_description: Create Ceph CRUSH hierarchy
-
-version_added: "2.6"
-
+version_added: "1.1.0"
 description:
-    - By using the hostvar variable 'osd_crush_location'
-    ceph_crush creates buckets and places them in the right CRUSH hierarchy
-
+    - By using the hostvar variable 'osd_crush_location' ceph_crush creates buckets and places them in the right CRUSH hierarchy
 options:
     cluster:
         description:
             - The ceph cluster name.
+        type: str
         required: false
         default: ceph
     location:
         description:
-            - osd_crush_location dict from the inventory file. It contains
-            the placement of each host in the CRUSH map.
+            - osd_crush_location dict from the inventory file. It contains the placement of each host in the CRUSH map.
+        type: dict
         required: true
     containerized:
         description:
-            - Weither or not this is a containerized cluster. The value is
-            assigned or not depending on how the playbook runs.
+            - Weither or not this is a containerized cluster. The value is assigned or not depending on how the playbook runs.
+        type: str
         required: false
-        default: None
+author: Sebastien Han (@leseb)
 '''
 
 EXAMPLES = '''
@@ -64,6 +62,13 @@ EXAMPLES = '''
 '''
 
 RETURN = '''#  '''
+
+from ansible.module_utils.basic import AnsibleModule
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import fatal
+except ImportError:
+    from module_utils.ceph_common import fatal
+import datetime
 
 
 def generate_cmd(cluster, subcommand, bucket, bucket_type, containerized=None):

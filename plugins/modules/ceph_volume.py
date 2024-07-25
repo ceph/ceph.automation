@@ -1,19 +1,22 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exec_command, \
-                                               is_containerized, \
-                                               fatal
-except ImportError:
-    from module_utils.ca_common import exec_command, \
-                                       is_containerized, \
-                                       fatal
-import datetime
-import copy
-import json
-import os
-import re
+# Copyright 2020, Red Hat, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.0',
@@ -26,7 +29,7 @@ DOCUMENTATION = '''
 module: ceph_volume
 
 short_description: Create ceph OSDs with ceph-volume
-
+version_added: "1.1.0"
 description:
     - Using the ceph-volume utility available in Ceph this module
       can be used to create ceph OSDs that are backed by logical volumes.
@@ -36,69 +39,87 @@ options:
     cluster:
         description:
             - The ceph cluster name.
+        type: str
         required: false
         default: ceph
     objectstore:
         description:
             - The objectstore of the OSD.
+        type: str
         required: false
         choices: ['bluestore']
         default: bluestore
     action:
         description:
             - The action to take. Creating OSDs and zapping or querying devices.
-        required: true
+        type: str
+        required: false
         choices: ['create', 'zap', 'batch', 'prepare', 'activate', 'list', 'inventory']
         default: create
     data:
         description:
             - The logical volume name or device to use for the OSD data.
-        required: true
+        type: str
+        required: false
     data_vg:
         description:
             - If data is a lv, this must be the name of the volume group it belongs to.
+        type: str
         required: false
     osd_fsid:
         description:
             - The OSD FSID
+        type: str
         required: false
     osd_id:
         description:
             - The OSD ID
+        type: str
         required: false
     db:
         description:
             - A partition or logical volume name to use for block.db.
+        type: str
         required: false
     db_vg:
         description:
             - If db is a lv, this must be the name of the volume group it belongs to.  # noqa: E501
+        type: str
         required: false
     wal:
         description:
             - A partition or logical volume name to use for block.wal.
+        type: str
         required: false
     wal_vg:
         description:
             - If wal is a lv, this must be the name of the volume group it belongs to.  # noqa: E501
+        type: str
         required: false
     crush_device_class:
         description:
             - Will set the crush device class for the OSD.
+        type: str
         required: false
     dmcrypt:
         description:
             - If set to True the OSD will be encrypted with dmcrypt.
+        type: bool
         required: false
+        default: false
     batch_devices:
         description:
             - A list of devices to pass to the 'ceph-volume lvm batch' subcommand.
             - Only applicable if action is 'batch'.
+        type: list
+        elements: str
         required: false
+        default: []
     osds_per_device:
         description:
             - The number of OSDs to create per device.
             - Only applicable if action is 'batch'.
+        type: int
         required: false
         default: 1
     block_db_size:
@@ -106,37 +127,44 @@ options:
             - The size in bytes of bluestore block db lvs.
             - The default of -1 means to create them as big as possible.
             - Only applicable if action is 'batch'.
+        type: str
         required: false
-        default: -1
+        default: "-1"
     block_db_devices:
         description:
             - A list of devices for bluestore block db to pass to the 'ceph-volume lvm batch' subcommand.
             - Only applicable if action is 'batch'.
+        type: list
+        elements: str
         required: false
+        default: []
     wal_devices:
         description:
             - A list of devices for bluestore block wal to pass to the 'ceph-volume lvm batch' subcommand.
             - Only applicable if action is 'batch'.
+        type: list
+        elements: str
         required: false
+        default: []
     report:
         description:
             - If provided the --report flag will be passed to 'ceph-volume lvm batch'.
             - No OSDs will be created.
             - Results will be returned in json format.
             - Only applicable if action is 'batch'.
+        type: bool
         required: false
-    list:
+        default: false
+    destroy:
         description:
-            - List potential Ceph LVM metadata on a device
+            - TBD
+        type: bool
         required: false
-    inventory:
-        description:
-            - List storage device inventory.
-        required: false
+        default: true
 
 author:
     - Andrew Schoen (@andrewschoen)
-    - Sebastien Han <seb@redhat.com>
+    - Sebastien Han (@leseb)
 '''
 
 EXAMPLES = '''
@@ -156,6 +184,22 @@ EXAMPLES = '''
     wal: /dev/sdc2
     action: create
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exec_command, \
+        is_containerized, \
+        fatal
+except ImportError:
+    from module_utils.ceph_common import exec_command, \
+        is_containerized, \
+        fatal
+
+import datetime
+import copy
+import json
+import os
+import re
 
 
 def container_exec(binary, container_image, mounts=None):
@@ -509,11 +553,11 @@ def run_module():
         wal_vg=dict(type='str', required=False),
         crush_device_class=dict(type='str', required=False),
         dmcrypt=dict(type='bool', required=False, default=False),
-        batch_devices=dict(type='list', required=False, default=[]),
+        batch_devices=dict(type='list', elements='str', required=False, default=[]),
         osds_per_device=dict(type='int', required=False, default=1),
         block_db_size=dict(type='str', required=False, default='-1'),
-        block_db_devices=dict(type='list', required=False, default=[]),
-        wal_devices=dict(type='list', required=False, default=[]),
+        block_db_devices=dict(type='list', elements='str', required=False, default=[]),
+        wal_devices=dict(type='list', elements='str', required=False, default=[]),
         report=dict(type='bool', required=False, default=False),
         osd_fsid=dict(type='str', required=False),
         osd_id=dict(type='str', required=False),

@@ -1,14 +1,22 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-# Copyright 2018 Daniel Pivonka <dpivonka@redhat.com>
-# Copyright 2018 Red Hat, Inc.
+# Copyright 2018, Red Hat, Inc.
 #
-# GNU General Public License v3.0+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-from ansible.module_utils.basic import AnsibleModule
-from socket import error as socket_error
-import boto
-import radosgw
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -20,241 +28,265 @@ DOCUMENTATION = '''
 ---
 module: ceph_add_users_buckets
 short_description: bulk create user and buckets
+version_added: "1.1.0"
 description:
     - Bulk create Ceph Object Storage users and buckets
-
-option:
+options:
     rgw_host:
         description:
             - a radosgw host in the ceph cluster
+        type: str
         required: true
     port:
         description:
             - tcp port of the radosgw host
+        type: int
         required: true
     is_secure:
         description:
             - boolean indicating whether the instance is running over https
+        type: bool
         required: false
         default: false
     admin_access_key:
         description:
             - radosgw admin user's access key
+        type: str
         required: true
     admin_secret_key:
         description:
             - radosgw admin user's secret key
+        type: str
         required: true
     users:
         description:
             - list of users to be created containing sub options
+        type: list
+        elements: dict
         required: false
-        sub_options:
+        suboptions:
             username:
                 description:
                     - username for new user
                 required: true
+                type: str
             fullname:
                 description:
                     - fullname for new user
+                type: str
                 required: true
             email:
                 description:
                     - email for new user
+                type: str
                 required: false
             maxbucket:
                 description:
                     - max bucket for new user
+                type: int
                 required: false
                 default: 1000
             suspend:
                 description:
                     - suspend a new user apon creation
+                type: bool
                 required: false
                 default: false
             autogenkey:
                 description:
                     - auto generate keys for new user
+                type: bool
                 required: false
                 default: true
             accesskey:
                 description:
                     - access key for new user
+                type: str
                 required: false
             secretkey:
                 description:
                     - secret key for new user
+                type: str
                 required: false
             userquota:
                 description:
                     - enable/disable user quota for new user
+                type: bool
                 required: false
                 default: false
             usermaxsize:
                 description:
                     - with user quota enabled specify quota size in kb
+                type: str
                 required: false
-                default: unlimited
+                default: '-1'
             usermaxobjects:
                 description:
                     - with user quota enabled specify maximum number of objects
+                type: int
                 required: false
-                default: unlimited
+                default: -1
             bucketquota:
                 description:
                     - enable/disable bucket quota for new user
+                type: bool
                 required: false
                 default: false
             bucketmaxsize:
                 description:
                     - with bucket quota enabled specify bucket size in kb
+                type: str
                 required: false
-                default: unlimited
+                default: '-1'
             bucketmaxobjects:
                 description:
                     - with bucket quota enabled specify maximum number of objects  # noqa: E501
+                type: int
                 required: false
-                default: unlimited
+                default: -1
     buckets:
         description:
             - list of buckets to be created containing sub options
+        type: list
+        elements: dict
         required: false
-        sub_options:
+        suboptions:
             bucket:
                 description:
                     - name for new bucket
+                type: str
                 required: true
             user:
                 description:
                     - user new bucket will be linked too
+                type: str
                 required: true
 
 
 requirements: ['radosgw', 'boto']
 
 author:
-    - 'Daniel Pivonka'
+    - Daniel Pivonka (@Daniel-Pivonka)
 
 '''
 
 EXAMPLES = '''
 # single basic user
 - name: single basic user
-    ceph_add_users_buckets:
-      rgw_host: '172.16.0.12'
-      port: 8080
-      admin_access_key: 'N61I8625V4XTWGDTLBLL'
-      admin_secret_key: 'HZrkuHHO9usUurDWBQHTeLIjO325bIULaC7DxcoV'
-      users:
-        - username: 'test1'
-          fullname: 'tester'
+  ceph_add_users_buckets:
+    rgw_host: '172.16.0.12'
+    port: 8080
+    admin_access_key: 'N61I8625V4XTWGDTLBLL'
+    admin_secret_key: 'HZrkuHHO9usUurDWBQHTeLIjO325bIULaC7DxcoV'
+    users:
+      - username: 'test1'
+        fullname: 'tester'
 
 
 # single complex user
 - name: single complex user
-    ceph_add_users_buckets:
-      rgw_host: '172.16.0.12'
-      port: 8080
-      admin_access_key: 'N61I8625V4XTWGDTLBLL'
-      admin_secret_key: 'HZrkuHHO9usUurDWBQHTeLIjO325bIULaC7DxcoV'
-      users:
-        - username: 'test1'
-          fullname: 'tester'
-          email: 'dan@email.com'
-          maxbucket: 666
-          suspend: true
-          autogenkey: true
-          accesskey: 'B3AR4Q33L59YV56A9A2F'
-          secretkey: 'd84BRnMysnVGSyZiRlYUMduVgIarQWiNMdKzrF76'
-          userquota: true
-          usermaxsize: '1000'
-          usermaxobjects: 3
-          bucketquota: true
-          bucketmaxsize: '1000'
-          bucketmaxobjects: 3
+  ceph_add_users_buckets:
+    rgw_host: '172.16.0.12'
+    port: 8080
+    admin_access_key: 'N61I8625V4XTWGDTLBLL'
+    admin_secret_key: 'HZrkuHHO9usUurDWBQHTeLIjO325bIULaC7DxcoV'
+    users:
+      - username: 'test1'
+        fullname: 'tester'
+        email: 'dan@email.com'
+        maxbucket: 666
+        suspend: true
+        autogenkey: true
+        accesskey: 'B3AR4Q33L59YV56A9A2F'
+        secretkey: 'd84BRnMysnVGSyZiRlYUMduVgIarQWiNMdKzrF76'
+        userquota: true
+        usermaxsize: '1000'
+        usermaxobjects: 3
+        bucketquota: true
+        bucketmaxsize: '1000'
+        bucketmaxobjects: 3
 
 # multi user
 - name: multi user
-    ceph_add_users_buckets:
-      rgw_host: '172.16.0.12'
-      port: 8080
-      admin_access_key: 'N61I8625V4XTWGDTLBLL'
-      admin_secret_key: 'HZrkuHHO9usUurDWBQHTeLIjO325bIULaC7DxcoV'
-      users:
-        - username: 'test1'
-          fullname: 'tester'
-          email: 'dan@email.com'
-          maxbucket: 666
-          suspend: true
-          autogenkey: true
-          accesskey: 'B3AR4Q33L59YV56A9A2F'
-          secretkey: 'd84BRnMysnVGSyZiRlYUMduVgIarQWiNMdKzrF76'
-          userquota: true
-          usermaxsize: '1000K'
-          usermaxobjects: 3
-          bucketquota: true
-          bucketmaxsize: '1000K'
-          bucketmaxobjects: 3
-        - username: 'test2'
-          fullname: 'tester'
+  ceph_add_users_buckets:
+    rgw_host: '172.16.0.12'
+    port: 8080
+    admin_access_key: 'N61I8625V4XTWGDTLBLL'
+    admin_secret_key: 'HZrkuHHO9usUurDWBQHTeLIjO325bIULaC7DxcoV'
+    users:
+      - username: 'test1'
+        fullname: 'tester'
+        email: 'dan@email.com'
+        maxbucket: 666
+        suspend: true
+        autogenkey: true
+        accesskey: 'B3AR4Q33L59YV56A9A2F'
+        secretkey: 'd84BRnMysnVGSyZiRlYUMduVgIarQWiNMdKzrF76'
+        userquota: true
+        usermaxsize: '1000K'
+        usermaxobjects: 3
+        bucketquota: true
+        bucketmaxsize: '1000K'
+        bucketmaxobjects: 3
+      - username: 'test2'
+        fullname: 'tester'
 
 # single bucket
 - name: single basic user
-    ceph_add_users_buckets:
-      rgw_host: '172.16.0.12'
-      port: 8080
-      admin_access_key: 'N61I8625V4XTWGDTLBLL'
-      admin_secret_key: 'HZrkuHHO9usUurDWBQHTeLIjO325bIULaC7DxcoV'
-      buckets:
-        - bucket: 'heyimabucket1'
-          user: 'test1'
+  ceph_add_users_buckets:
+    rgw_host: '172.16.0.12'
+    port: 8080
+    admin_access_key: 'N61I8625V4XTWGDTLBLL'
+    admin_secret_key: 'HZrkuHHO9usUurDWBQHTeLIjO325bIULaC7DxcoV'
+    buckets:
+      - bucket: 'heyimabucket1'
+        user: 'test1'
 
 # multi bucket
 - name: single basic user
-    ceph_add_users_buckets:
-      rgw_host: '172.16.0.12'
-      port: 8080
-      admin_access_key: 'N61I8625V4XTWGDTLBLL'
-      admin_secret_key: 'HZrkuHHO9usUurDWBQHTeLIjO325bIULaC7DxcoV'
-      buckets:
-        - bucket: 'heyimabucket1'
-          user: 'test1'
-        - bucket: 'heyimabucket2'
-          user: 'test2'
-        - bucket: 'heyimabucket3'
-          user: 'test2'
+  ceph_add_users_buckets:
+    rgw_host: '172.16.0.12'
+    port: 8080
+    admin_access_key: 'N61I8625V4XTWGDTLBLL'
+    admin_secret_key: 'HZrkuHHO9usUurDWBQHTeLIjO325bIULaC7DxcoV'
+    buckets:
+      - bucket: 'heyimabucket1'
+        user: 'test1'
+      - bucket: 'heyimabucket2'
+        user: 'test2'
+      - bucket: 'heyimabucket3'
+        user: 'test2'
 
 # buckets and users
 - name: single basic user
-    ceph_add_users_buckets:
-      rgw_host: '172.16.0.12'
-      port: 8080
-      admin_access_key: 'N61I8625V4XTWGDTLBLL'
-      admin_secret_key: 'HZrkuHHO9usUurDWBQHTeLIjO325bIULaC7DxcoV'
-      users:
-        - username: 'test1'
-          fullname: 'tester'
-          email: 'dan@email.com'
-          maxbucket: 666
-        - username: 'test2'
-          fullname: 'tester'
-          email: 'dan1@email.com'
-          accesskey: 'B3AR4Q33L59YV56A9A2F'
-          secretkey: 'd84BRnMysnVGSyZiRlYUMduVgIarQWiNMdKzrF76'
-          userquota: true
-          usermaxsize: '1000'
-          usermaxobjects: 3
-          bucketquota: true
-          bucketmaxsize: '1000'
-          bucketmaxobjects: 3
-      buckets:
-        - bucket: 'heyimabucket1'
-          user: 'test1'
-        - bucket: 'heyimabucket2'
-          user: 'test2'
-        - bucket: 'heyimabucket3'
-          user: 'test2'
-
+  ceph_add_users_buckets:
+    rgw_host: '172.16.0.12'
+    port: 8080
+    admin_access_key: 'N61I8625V4XTWGDTLBLL'
+    admin_secret_key: 'HZrkuHHO9usUurDWBQHTeLIjO325bIULaC7DxcoV'
+    users:
+      - username: 'test1'
+        fullname: 'tester'
+        email: 'dan@email.com'
+        maxbucket: 666
+      - username: 'test2'
+        fullname: 'tester'
+        email: 'dan1@email.com'
+        accesskey: 'B3AR4Q33L59YV56A9A2F'
+        secretkey: 'd84BRnMysnVGSyZiRlYUMduVgIarQWiNMdKzrF76'
+        userquota: true
+        usermaxsize: '1000'
+        usermaxobjects: 3
+        bucketquota: true
+        bucketmaxsize: '1000'
+        bucketmaxobjects: 3
+    buckets:
+      - bucket: 'heyimabucket1'
+        user: 'test1'
+      - bucket: 'heyimabucket2'
+        user: 'test2'
+      - bucket: 'heyimabucket3'
+        user: 'test2'
 '''
 
 RETURN = '''
@@ -291,6 +323,29 @@ added_buckets:
     sample: "heyimabucket1, heyimabucket2"
 
 '''
+
+from ansible.module_utils.basic import AnsibleModule  # type: ignore
+import traceback
+from ansible.module_utils.basic import missing_required_lib
+from socket import error as socket_error
+
+try:
+    import boto
+except ImportError:
+    HAS_ANOTHER_LIBRARY = False
+    ANOTHER_LIBRARY_IMPORT_ERROR = traceback.format_exc()
+else:
+    HAS_ANOTHER_LIBRARY = True
+    ANOTHER_LIBRARY_IMPORT_ERROR = None
+
+try:
+    import radosgw
+except ImportError:
+    HAS_ANOTHER_LIBRARY = False
+    ANOTHER_LIBRARY_IMPORT_ERROR = traceback.format_exc()
+else:
+    HAS_ANOTHER_LIBRARY = True
+    ANOTHER_LIBRARY_IMPORT_ERROR = None
 
 
 def create_users(rgw, users, result):
@@ -486,8 +541,8 @@ def main():
                   is_secure=dict(type='bool',
                                  required=False,
                                  default=False),
-                  admin_access_key=dict(type='str', required=True),
-                  admin_secret_key=dict(type='str', required=True),
+                  admin_access_key=dict(type='str', required=True, no_log=False),
+                  admin_secret_key=dict(type='str', required=True, no_log=False),
                   buckets=dict(type='list', required=False, elements='dict',
                                options=dict(bucket=dict(type='str', required=True),  # noqa: E501
                                             user=dict(type='str', required=True))),  # noqa: E501
@@ -498,8 +553,8 @@ def main():
                                           maxbucket=dict(type='int', required=False, default=1000),  # noqa: E501
                                           suspend=dict(type='bool', required=False, default=False),  # noqa: E501
                                           autogenkey=dict(type='bool', required=False, default=True),  # noqa: E501
-                                          accesskey=dict(type='str', required=False),  # noqa: E501
-                                          secretkey=dict(type='str', required=False),  # noqa: E501
+                                          accesskey=dict(type='str', required=False, no_log=False),  # noqa: E501
+                                          secretkey=dict(type='str', required=False, no_log=False),  # noqa: E501
                                           userquota=dict(type='bool', required=False, default=False),  # noqa: E501
                                           usermaxsize=dict(type='str', required=False, default='-1'),  # noqa: E501
                                           usermaxobjects=dict(type='int', required=False, default=-1),  # noqa: E501
@@ -510,6 +565,11 @@ def main():
     # the AnsibleModule object
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
+
+    if not HAS_ANOTHER_LIBRARY:
+        module.fail_json(
+            msg=missing_required_lib('another_library'),
+            exception=ANOTHER_LIBRARY_IMPORT_ERROR)
 
     # get vars
     rgw_host = module.params.get('rgw_host')

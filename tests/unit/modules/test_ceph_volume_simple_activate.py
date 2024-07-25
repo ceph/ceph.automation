@@ -1,8 +1,8 @@
 from mock.mock import patch
 import os
 import pytest
-import ca_test_common
-import ceph_volume_simple_activate
+from ansible_collections.ceph.automation.tests.unit.modules import ca_test_common
+from ansible_collections.ceph.automation.plugins.modules import ceph_volume_simple_activate
 
 fake_cluster = 'ceph'
 fake_container_binary = 'podman'

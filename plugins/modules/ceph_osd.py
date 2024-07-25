@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2020, Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,14 +18,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, generate_cmd, is_containerized  # noqa: E501
-except ImportError:
-    from module_utils.ca_common import exit_module, generate_cmd, is_containerized  # noqa: E501
-import datetime
-
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -33,26 +28,30 @@ DOCUMENTATION = '''
 ---
 module: ceph_osd
 short_description: Manage Ceph OSD state
-version_added: "2.8"
+version_added: "1.1.0"
 description:
     - Manage Ceph OSD state
 options:
     ids:
         description:
             - The ceph OSD id(s).
+        type: list
+        elements: int
         required: true
     cluster:
         description:
             - The ceph cluster name.
+        type: str
         required: false
         default: ceph
     state:
         description:
             - The ceph OSD state.
+        type: str
         required: true
         choices: ['destroy', 'down', 'in', 'out', 'purge', 'rm']
 author:
-    - Dimitri Savineau <dsavinea@redhat.com>
+    - Dimitri Savineau (@dsavineau)
 '''
 
 EXAMPLES = '''
@@ -89,11 +88,18 @@ EXAMPLES = '''
 
 RETURN = '''#  '''
 
+from ansible.module_utils.basic import AnsibleModule
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, generate_cmd, is_containerized  # noqa: E501
+except ImportError:
+    from module_utils.ceph_common import exit_module, generate_cmd, is_containerized  # noqa: E501
+import datetime
+
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            ids=dict(type='list', required=True),
+            ids=dict(type='list', elements='int', required=True),
             cluster=dict(type='str', required=False, default='ceph'),
             state=dict(type='str', required=True, choices=['destroy', 'down', 'in', 'out', 'purge', 'rm']),  # noqa: E501
         ),

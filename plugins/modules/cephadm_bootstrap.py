@@ -29,7 +29,7 @@ DOCUMENTATION = '''
 ---
 module: cephadm_bootstrap
 short_description: Bootstrap a Ceph cluster via cephadm
-version_added: "1.0.0"
+version_added: "1.1.0"
 description:
     - Bootstrap a Ceph cluster via cephadm
 options:

@@ -1,9 +1,8 @@
 import os
-import sys
 from mock.mock import patch, MagicMock
 import pytest
-sys.path.append('./library')
-import radosgw_user  # noqa: E402
+# sys.path.append('./library')
+from ansible_collections.ceph.automation.plugins.modules import radosgw_user
 
 
 fake_binary = 'radosgw-admin'

@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2020, Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,22 +18,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import is_containerized, \
-                                               exec_command, \
-                                               generate_cmd, \
-                                               exit_module
-except ImportError:
-    from module_utils.ca_common import is_containerized, \
-                                       exec_command, \
-                                       generate_cmd, \
-                                       exit_module
-
-import datetime
-import json
-
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -43,7 +30,7 @@ module: ceph_fs
 
 short_description: Manage Ceph File System
 
-version_added: "2.8"
+version_added: "1.1.0"
 
 description:
     - Manage Ceph File System(s) creation, deletion and updates.
@@ -51,38 +38,42 @@ options:
     cluster:
         description:
             - The ceph cluster name.
+        type: str
         required: false
         default: ceph
     name:
         description:
             - name of the Ceph File System.
+        type: str
         required: true
     state:
         description:
-            If 'present' is used, the module creates a filesystem if it
-            doesn't  exist or update it if it already exists.
-            If 'absent' is used, the module will simply delete the filesystem.
-            If 'info' is used, the module will return all details about the
-            existing filesystem (json formatted).
+            - If 'present' is used, the module creates a filesystem if it doesn't  exist or update it if it already exists.
+            - If 'absent' is used, the module will simply delete the filesystem.
+            - If 'info' is used, the module will return all details about the existing filesystem (json formatted).
+        type: str
         required: false
-        choices: ['present', 'absent', 'info']
+        choices: ['present', 'absent']
         default: present
     data:
         description:
             - name of the data pool.
+        type: str
         required: false
     metadata:
         description:
             - name of the metadata pool.
+        type: str
         required: false
     max_mds:
         description:
             - name of the max_mds attribute.
+        type: int
         required: false
 
 
 author:
-    - Dimitri Savineau <dsavinea@redhat.com>
+    - Dimitri Savineau (@dsavineau)
 '''
 
 EXAMPLES = '''
@@ -105,6 +96,21 @@ EXAMPLES = '''
 '''
 
 RETURN = '''#  '''
+
+from ansible.module_utils.basic import AnsibleModule
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import is_containerized, \
+        exec_command, \
+        generate_cmd, \
+        exit_module
+except ImportError:
+    from module_utils.ceph_common import is_containerized, \
+        exec_command, \
+        generate_cmd, \
+        exit_module
+
+import datetime
+import json
 
 
 def create_fs(module, container_image=None):
@@ -204,7 +210,7 @@ def run_module():
     module_args = dict(
         cluster=dict(type='str', required=False, default='ceph'),
         name=dict(type='str', required=True),
-        state=dict(type='str', required=False, choices=['present', 'absent', 'info'], default='present'),  # noqa: E501
+        state=dict(type='str', required=False, choices=['present', 'absent'], default='present'),  # noqa: E501
         data=dict(type='str', required=False),
         metadata=dict(type='str', required=False),
         max_mds=dict(type='int', required=False),

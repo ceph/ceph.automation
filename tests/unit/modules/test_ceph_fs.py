@@ -1,5 +1,5 @@
 from mock.mock import MagicMock
-import ceph_fs
+from ansible_collections.ceph.automation.plugins.modules import ceph_fs
 
 
 fake_binary = 'ceph'

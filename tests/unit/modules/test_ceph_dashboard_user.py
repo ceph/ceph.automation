@@ -1,8 +1,8 @@
 from mock.mock import MagicMock, patch
 import pytest
 import os
-import ca_test_common
-import ceph_dashboard_user
+from ansible_collections.ceph.automation.tests.unit.modules import ca_test_common
+from ansible_collections.ceph.automation.plugins.modules import ceph_dashboard_user
 
 fake_container_binary = 'podman'
 fake_container_image = 'docker.io/ceph/daemon:latest'
