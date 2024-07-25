@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright Red Hat
 # SPDX-License-Identifier: Apache-2.0
 # Author: Guillaume Abrioux <gabrioux@redhat.com>
@@ -32,10 +35,10 @@ options:
     action:
         description:
             - whether to get or set the parameter specified in 'option'
-        required: false
         type: str
         choices: ['get', 'set']
         default: 'set'
+        required: false
     who:
         description:
             - which daemon the configuration should be set to

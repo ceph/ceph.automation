@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2020, Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,12 +18,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-import datetime
-import json
-import os
-
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -33,7 +30,7 @@ module: radosgw_user
 
 short_description: Manage RADOS Gateway User
 
-version_added: "2.8"
+version_added: "1.0.0"
 
 description:
     - Manage RADOS Gateway user(s) creation, deletion and updates.
@@ -41,70 +38,73 @@ options:
     cluster:
         description:
             - The ceph cluster name.
+        type: str
         required: false
         default: ceph
     name:
         description:
             - name of the RADOS Gateway user (uid).
+        type: str
         required: true
     state:
         description:
-            If 'present' is used, the module creates a user if it doesn't
-            exist or update it if it already exists.
-            If 'absent' is used, the module will simply delete the user.
-            If 'info' is used, the module will return all details about the
-            existing user (json formatted).
+            - If 'present' is used, the module creates a user if it doesn't exist or update it if it already exists.
+            - If 'absent' is used, the module will simply delete the user.
+            - If 'info' is used, the module will return all details about the existing user (json formatted).
+        type: str
         required: false
-        choices: ['present', 'absent', 'info']
+        choices: ['present', 'absent']
         default: present
     display_name:
         description:
             - set the display name of the user.
+        type: str
         required: false
-        default: None
     email:
         description:
             - set the email of the user.
+        type: str
         required: false
-        default: None
     access_key:
         description:
             - set the S3 access key of the user.
+        type: str
         required: false
-        default: None
     secret_key:
         description:
             - set the S3 secret key of the user.
+        type: str
         required: false
-        default: None
     realm:
         description:
             - set the realm of the user.
+        type: str
         required: false
-        default: None
     zonegroup:
         description:
             - set the zonegroup of the user.
+        type: str
         required: false
-        default: None
     zone:
         description:
             - set the zone of the user.
+        type: str
         required: false
-        default: None
     system:
         description:
             - set the system flag on the user.
+        type: bool
         required: false
         default: false
     admin:
         description:
             - set the admin flag on the user.
+        type: bool
         required: false
         default: false
 
 author:
-    - Dimitri Savineau <dsavinea@redhat.com>
+    - Dimitri Savineau (@dsavineau)
 '''
 
 EXAMPLES = '''
@@ -133,6 +133,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''#  '''
+
+from ansible.module_utils.basic import AnsibleModule
+import datetime
+import json
+import os
 
 
 def container_exec(binary, container_image):
@@ -389,7 +394,7 @@ def run_module():
     module_args = dict(
         cluster=dict(type='str', required=False, default='ceph'),
         name=dict(type='str', required=True),
-        state=dict(type='str', required=False, choices=['present', 'absent', 'info'], default='present'),  # noqa: E501
+        state=dict(type='str', required=False, choices=['present', 'absent'], default='present'),  # noqa: E501
         display_name=dict(type='str', required=False),
         email=dict(type='str', required=False),
         access_key=dict(type='str', required=False, no_log=True),

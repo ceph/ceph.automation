@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2022, Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,30 +16,7 @@
 # limitations under the License.
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
-
-from ansible.module_utils.basic import AnsibleModule
-
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import (
-        exit_module,
-        exec_command,
-        is_containerized,
-        container_exec,
-    )
-except ImportError:
-    from module_utils.ca_common import (
-        exit_module,
-        exec_command,
-        is_containerized,
-        container_exec,
-    )
-import datetime
-import json
-import re
-from enum import IntFlag
-
 
 ANSIBLE_METADATA = {
     "metadata_version": "1.1",
@@ -50,7 +30,7 @@ module: radosgw_caps
 
 short_description: Manage RADOS Gateway Admin capabilities
 
-version_added: "2.10"
+version_added: "1.0.0"
 
 description:
     - Manage RADOS Gateway capabilities addition and deletion.
@@ -83,7 +63,7 @@ options:
         elements: str
 
 author:
-    - Mathias Chapelain <mathias.chapelain@proton.ch>
+    - Mathias Chapelain (@Papawy)
 """
 
 EXAMPLES = """
@@ -158,6 +138,17 @@ changed:
   returned: always
   type: bool
 """
+
+
+from ansible.module_utils.basic import AnsibleModule  # type: ignore
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, exec_command, is_containerized, container_exec
+except ImportError:
+    from module_utils.ceph_common import exit_module, exec_command, is_containerized, container_exec
+from enum import IntFlag
+import re
+import json
+import datetime
 
 
 def pre_generate_radosgw_cmd(container_image=None):
@@ -277,11 +268,13 @@ def params_to_caps_output(current_caps, params, deletion=False):
         cap = splitted[0]
 
         new_perm = perm_string_to_flag(splitted[1])
-        current = next((item for item in out_caps if item["type"] == cap), None)
+        current = next(
+            (item for item in out_caps if item["type"] == cap), None)
 
         if not current:
             if not deletion:
-                out_caps.append(dict(type=cap, perm=perm_flag_to_string(new_perm)))
+                out_caps.append(
+                    dict(type=cap, perm=perm_flag_to_string(new_perm)))
             continue
 
         current_perm = perm_string_to_flag(current["perm"])

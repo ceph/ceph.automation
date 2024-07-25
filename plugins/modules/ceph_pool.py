@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2020, Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,26 +18,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import generate_cmd, \
-                                               pre_generate_cmd, \
-                                               is_containerized, \
-                                               exec_command, \
-                                               exit_module
-except ImportError:
-    from module_utils.ca_common import generate_cmd, \
-                                       pre_generate_cmd, \
-                                       is_containerized, \
-                                       exec_command, \
-                                       exit_module
-
-
-import datetime
-import json
-import os
-
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -45,11 +28,11 @@ DOCUMENTATION = '''
 ---
 module: ceph_pool
 
-author: Guillaume Abrioux <gabrioux@redhat.com>
+author: Guillaume Abrioux (@guits)
 
 short_description: Manage Ceph Pools
 
-version_added: "2.8"
+version_added: "1.0.0"
 
 description:
     - Manage Ceph pool(s) creation, deletion and updates.
@@ -57,84 +40,96 @@ options:
     cluster:
         description:
             - The ceph cluster name.
+        type: str
         required: false
         default: ceph
     name:
         description:
             - name of the Ceph pool
+        type: str
         required: true
     state:
         description:
-            If 'present' is used, the module creates a pool if it doesn't exist
-            or update it if it already exists.
-            If 'absent' is used, the module will simply delete the pool.
-            If 'list' is used, the module will return all details about the
-            existing pools. (json formatted).
+            - If 'present' is used, the module creates a pool if it doesn't exist or update it if it already exists.
+            - If 'absent' is used, the module will simply delete the pool.
+            - If 'list' is used, the module will return all details about the existing pools. (json formatted).
+        type: str
         required: false
-        choices: ['present', 'absent', 'list']
+        choices: ['present', 'absent']
         default: present
+    details:
+        description:
+            - TBD
+        type: bool
+        required: false
+        default: false
     size:
         description:
             - set the replica size of the pool.
+        type: str
         required: false
-        default: 3
+        default: "3"
     min_size:
         description:
             - set the min_size parameter of the pool.
+            - default to `osd_pool_default_min_size` (ceph)
+        type: str
         required: false
-        default: default to `osd_pool_default_min_size` (ceph)
     pg_num:
         description:
             - set the pg_num of the pool.
+            - default to `osd_pool_default_pg_num` (ceph)
+        type: str
         required: false
-        default: default to `osd_pool_default_pg_num` (ceph)
     pgp_num:
         description:
             - set the pgp_num of the pool.
+            - default to `osd_pool_default_pgp_num` (ceph)
+        type: str
         required: false
-        default: default to `osd_pool_default_pgp_num` (ceph)
     pg_autoscale_mode:
         description:
             - set the pg autoscaler on the pool.
+        type: str
         required: false
         default: 'on'
     target_size_ratio:
         description:
             - set the target_size_ratio on the pool
+        type: str
         required: false
-        default: None
     pool_type:
         description:
             - set the pool type, either 'replicated' or 'erasure'
+        type: str
+        choices: ['replicated', 'erasure', '1', '3']
         required: false
         default: 'replicated'
     erasure_profile:
         description:
             - When pool_type = 'erasure', set the erasure profile of the pool
+        type: str
         required: false
         default: 'default'
     rule_name:
         description:
-            - Set the crush rule name assigned to the pool
+            - Set the crush rule name assigned to the pool. default 'replicated_rule' when pool_type is 'erasure' else None
+        type: str
         required: false
-        default: 'replicated_rule' when pool_type is 'erasure' else None
     expected_num_objects:
         description:
-            -   Set the expected_num_objects parameter of the pool.
+            - Set the expected_num_objects parameter of the pool.
+        type: str
         required: false
         default: '0'
     application:
         description:
             - Set the pool application on the pool.
+        type: str
         required: false
-        default: None
 '''
 
 EXAMPLES = '''
-
-pools:
-  - { name: foo, size: 3, application: rbd, pool_type: 'replicated',
-      pg_autoscale_mode: 'on' }
 
 - hosts: all
   become: true
@@ -151,6 +146,25 @@ pools:
 '''
 
 RETURN = '''#  '''
+
+from ansible.module_utils.basic import AnsibleModule
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import generate_cmd, \
+        pre_generate_cmd, \
+        is_containerized, \
+        exec_command, \
+        exit_module
+except ImportError:
+    from module_utils.ceph_common import generate_cmd, \
+        pre_generate_cmd, \
+        is_containerized, \
+        exec_command, \
+        exit_module
+
+
+import datetime
+import json
+import os
 
 
 def check_pool_exist(cluster,
@@ -515,9 +529,9 @@ def run_module():
         cluster=dict(type='str', required=False, default='ceph'),
         name=dict(type='str', required=True),
         state=dict(type='str', required=False, default='present',
-                   choices=['present', 'absent', 'list']),
+                   choices=['present', 'absent']),
         details=dict(type='bool', required=False, default=False),
-        size=dict(type='str', required=False),
+        size=dict(type='str', required=False, default='3'),
         min_size=dict(type='str', required=False),
         pg_num=dict(type='str', required=False),
         pgp_num=dict(type='str', required=False),
@@ -643,7 +657,7 @@ def run_module():
                                                          user_pool_config=user_pool_config,  # noqa: E501
                                                          container_image=container_image))  # noqa: E501
             if user_pool_config['application']['value']:
-                rc, _, _, _ = exec_command(module,
+                rc, cmd, out, err = exec_command(module,
                                            enable_application_pool(cluster,
                                                                    name,
                                                                    user_pool_config['application']['value'],  # noqa: E501

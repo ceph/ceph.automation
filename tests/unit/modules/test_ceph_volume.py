@@ -37,7 +37,7 @@ def get_container_cmd(mounts=None):
 
     return ['docker', 'run', '--rm', '--privileged',
             '--net=host', '--ipc=host'] + \
-            get_mounts(mounts) + ['--entrypoint=ceph-volume']
+        get_mounts(mounts) + ['--entrypoint=ceph-volume']
 
 
 @mock.patch.dict(os.environ, {'CEPH_CONTAINER_BINARY': 'docker'})
@@ -170,9 +170,9 @@ class TestCephVolumeModule(object):
         fake_module.params = {'cluster': 'ceph', 'data': '/dev/sda'}
         fake_container_image = "quay.io/ceph/daemon:latest"
         expected_command_list = get_container_cmd(
-                                {
-                                    '/var/lib/ceph': '/var/lib/ceph:ro'
-                                }) + \
+            {
+                '/var/lib/ceph': '/var/lib/ceph:ro'
+            }) + \
             [fake_container_image,
                 '--cluster',
                 'ceph',
@@ -192,7 +192,8 @@ class TestCephVolumeModule(object):
                                  'inventory',
                                  '--format=json',
                                  ]
-        result = ceph_volume.list_storage_inventory(fake_module, fake_container_image)
+        result = ceph_volume.list_storage_inventory(
+            fake_module, fake_container_image)
         assert result == expected_command_list
 
     def test_list_storage_inventory_container(self):
@@ -204,7 +205,8 @@ class TestCephVolumeModule(object):
                 'ceph',
                 'inventory',
                 '--format=json']
-        result = ceph_volume.list_storage_inventory(fake_module, fake_container_image)
+        result = ceph_volume.list_storage_inventory(
+            fake_module, fake_container_image)
         assert result == expected_command_list
 
     @pytest.mark.parametrize('objectstore', ['bluestore'])
@@ -410,17 +412,17 @@ class TestCephVolumeModule(object):
         list_stderr = ''
         list_stdout = '{}'
         prepare_rc = 0
-        prepare_stderr = """
+        prepare_stderr = f"""
     Running command: /usr/bin/ceph-authtool --gen-print-key
     Running command: /usr/bin/mount -t tmpfs tmpfs /var/lib/ceph/osd/ceph-0
     Running command: /usr/bin/chown -h ceph:ceph /dev/test_group/data-lv1
     Running command: /usr/bin/chown -R ceph:ceph /dev/dm-0
     Running command: /usr/bin/ln -s /dev/test_group/data-lv1 /var/lib/ceph/osd/ceph-1/block
      stderr: got monmap epoch 1
-    Running command: /usr/bin/ceph-authtool /var/lib/ceph/osd/ceph-1/keyring --create-keyring --name osd.1 --add-key {}
+    Running command: /usr/bin/ceph-authtool /var/lib/ceph/osd/ceph-1/keyring --create-keyring --name osd.1 --add-key {keyring}
      stdout: creating /var/lib/ceph/osd/ceph-1/keyring
-    added entity osd.1 auth(key={})
-""".format(keyring, keyring)
+    added entity osd.1 auth(key={keyring})
+"""
         prepare_stdout = ''
         m_run_command.side_effect = [
             (list_rc, list_stdout, list_stderr),
@@ -432,7 +434,8 @@ class TestCephVolumeModule(object):
 
         result = result.value.args[0]
         assert result['changed']
-        assert result['cmd'] == ['ceph-volume', '--cluster', 'ceph', 'lvm', 'prepare', '--bluestore', '--data', '/dev/sda']
+        assert result['cmd'] == ['ceph-volume', '--cluster', 'ceph',
+                                 'lvm', 'prepare', '--bluestore', '--data', '/dev/sda']
         assert result['rc'] == 0
         assert keyring not in result['stderr']
         assert '*' * 8 in result['stderr']
@@ -451,17 +454,17 @@ class TestCephVolumeModule(object):
         report_stderr = ''
         report_stdout = '[{"data": "/dev/sda", "data_size": "50.00 GB", "encryption": "None"}]'
         batch_rc = 0
-        batch_stderr = """
+        batch_stderr = f"""
     Running command: /usr/bin/ceph-authtool --gen-print-key
     Running command: /usr/bin/mount -t tmpfs tmpfs /var/lib/ceph/osd/ceph-0
     Running command: /usr/bin/chown -h ceph:ceph /dev/ceph-863337c4-bef9-4b96-aaac-27cde8c42b8f/osd-block-b1d1036f-0d6e-493b-9d1a-6f6b96df64b1
     Running command: /usr/bin/chown -R ceph:ceph /dev/mapper/ceph--863337c4--bef9--4b96--aaac--27cde8c42b8f-osd--block--b1d1036f--0d6e--493b--9d1a--6f6b96df64b1
     Running command: /usr/bin/ln -s /dev/ceph-863337c4-bef9-4b96-aaac-27cde8c42b8f/osd-block-b1d1036f-0d6e-493b-9d1a-6f6b96df64b1 /var/lib/ceph/osd/ceph-0/block
      stderr: got monmap epoch 1
-    Running command: /usr/bin/ceph-authtool /var/lib/ceph/osd/ceph-0/keyring --create-keyring --name osd.0 --add-key {}
+    Running command: /usr/bin/ceph-authtool /var/lib/ceph/osd/ceph-0/keyring --create-keyring --name osd.0 --add-key {keyring}
      stdout: creating /var/lib/ceph/osd/ceph-0/keyring
-    added entity osd.0 auth(key={})
-""".format(keyring, keyring)
+    added entity osd.0 auth(key={keyring})
+"""
         batch_stdout = ''
         m_run_command.side_effect = [
             (report_rc, report_stdout, report_stderr),
@@ -473,7 +476,8 @@ class TestCephVolumeModule(object):
 
         result = result.value.args[0]
         assert result['changed']
-        assert result['cmd'] == ['ceph-volume', '--cluster', 'ceph', 'lvm', 'batch', '--bluestore', '--yes', '/dev/sda']
+        assert result['cmd'] == ['ceph-volume', '--cluster', 'ceph',
+                                 'lvm', 'batch', '--bluestore', '--yes', '/dev/sda']
         assert result['rc'] == 0
         assert keyring not in result['stderr']
         assert '*' * 8 in result['stderr']

@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2020, Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,15 +18,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module
-except ImportError:
-    from module_utils.ca_common import exit_module
-import datetime
-import os
-
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -34,33 +28,35 @@ DOCUMENTATION = '''
 ---
 module: ceph_volume_simple_scan
 short_description: Scan legacy OSD with ceph-volume
-version_added: "2.8"
+version_added: "1.0.0"
 description:
-    - Scan legacy OSD with ceph-volume and store the output as JSON file
-      in /etc/ceph/osd directory with {OSD_ID}-{OSD_FSID}.json format.
+    - Scan legacy OSD with ceph-volume and store the output as JSON file in /etc/ceph/osd directory with {OSD_ID}-{OSD_FSID}.json format.
 options:
     cluster:
         description:
             - The ceph cluster name.
+        type: str
         required: false
         default: ceph
     path:
         description:
-            - The OSD directory or metadata partition. The directory or
-              partition must exist.
+            - The OSD directory or metadata partition. The directory or partition must exist.
+        type: path
         required: false
     force:
         description:
             - Force re-scanning an OSD and overwriting the JSON content.
+        type: bool
         required: false
         default: false
     stdout:
         description:
             - Do not store the output to JSON file but stdout instead.
+        type: bool
         required: false
         default: false
 author:
-    - Dimitri Savineau <dsavinea@redhat.com>
+    - Dimitri Savineau (@dsavineau)
 '''
 
 EXAMPLES = '''
@@ -87,6 +83,14 @@ EXAMPLES = '''
 '''
 
 RETURN = '''#  '''
+
+from ansible.module_utils.basic import AnsibleModule
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module
+except ImportError:
+    from module_utils.ceph_common import exit_module
+import datetime
+import os
 
 
 def main():

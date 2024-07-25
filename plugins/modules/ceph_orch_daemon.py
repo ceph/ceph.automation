@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright Red Hat
 # SPDX-License-Identifier: Apache-2.0
 # Author: Guillaume Abrioux <gabrioux@redhat.com>
@@ -38,9 +41,9 @@ options:
     state:
         description:
             - The desired state of the service specified in 'name'.
-              If 'started', it ensures the service is started.
-              If 'stopped', it ensures the service is stopped.
-              If 'restarted', it will restart the service.
+            - If 'started', it ensures the service is started.
+            - If 'stopped', it ensures the service is stopped.
+            - If 'restarted', it will restart the service.
         choices:
             - started
             - stopped

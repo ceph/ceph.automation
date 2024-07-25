@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2020, Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,21 +18,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import is_containerized, \
-                                               generate_cmd, \
-                                               exec_command, \
-                                               exit_module
-except ImportError:
-    from module_utils.ca_common import is_containerized, \
-                                            generate_cmd, \
-                                            exec_command, \
-                                            exit_module
-import datetime
-import json
-
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -42,7 +30,7 @@ module: ceph_ec_profile
 
 short_description: Manage Ceph Erasure Code profile
 
-version_added: "2.8"
+version_added: "1.0.0"
 
 description:
     - Manage Ceph Erasure Code profile
@@ -50,39 +38,91 @@ options:
     cluster:
         description:
             - The ceph cluster name.
+        type: str
         required: false
         default: ceph
     name:
         description:
             - name of the profile.
+        type: str
         required: true
     state:
         description:
-            If 'present' is used, the module creates a profile.
-            If 'absent' is used, the module will delete the profile.
+            - If 'present' is used, the module creates a profile.
+            - If 'absent' is used, the module will delete the profile.
+        type: str
         required: false
-        choices: ['present', 'absent', 'info']
+        choices: ['present', 'absent']
         default: present
     stripe_unit:
         description:
             - The amount of data in a data chunk, per stripe.
+        type: str
         required: false
+    plugin:
+        description:
+            - TBD
+        type: str
+        required: false
+        default: 'jerasure'
     k:
         description:
             - Number of data-chunks the object will be split in
-        required: true
+        type: str
+        required: false
     m:
         description:
-            - Compute coding chunks for each object and store them on different
-              OSDs.
-        required: true
+            - Compute coding chunks for each object and store them on different OSDs.
+        type: str
+        required: false
+    d:
+        description:
+            - Number of data-chunks the object will be split in
+        type: str
+        required: false
+    l:
+        description:
+            - TBD
+        type: str
+        required: false
+    c:
+        description:
+            - TBD
+        type: str
+        required: false
+    scalar_mds:
+        description:
+            - TBD
+        type: str
+        required: false
+    technique:
+        description:
+            - TBD
+        type: str
+        required: false
+    crush_root:
+        description:
+            - TBD
+        type: str
+        required: false
+    crush_failure_domain:
+        description:
+            - TBD
+        type: str
+        required: false
     crush_device_class:
         description:
             - Restrict placement to devices of a specific class (hdd/ssd)
+        type: str
         required: false
-
+    force:
+        description:
+            - TBD
+        type: bool
+        required: false
+        default: false
 author:
-    - Guillaume Abrioux <gabrioux@redhat.com>
+    - Guillaume Abrioux (@guits)
 '''
 
 EXAMPLES = '''
@@ -99,6 +139,21 @@ EXAMPLES = '''
 '''
 
 RETURN = '''#  '''
+
+from ansible.module_utils.basic import AnsibleModule
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import is_containerized, \
+        generate_cmd, \
+        exec_command, \
+        exit_module
+except ImportError:
+    from module_utils.ceph_common import is_containerized, \
+        generate_cmd, \
+        exec_command, \
+        exit_module
+
+import datetime
+import json
 
 
 def get_profile(name, cluster='ceph', container_image=None):
