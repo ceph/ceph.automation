@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright Red Hat
 # SPDX-License-Identifier: Apache-2.0
 # Author: Guillaume Abrioux <gabrioux@redhat.com>
@@ -65,9 +68,8 @@ options:
         required: false
     registry_json:
         description:
-            - The path to a json file. This file must be present on remote hosts
-              prior to running this task.
-              *not supported yet*.
+            - The path to a json file. This file must be present on remote hosts prior to running this task.
+            - not supported yet.
         type: str
 author:
     - Guillaume Abrioux (@guits)

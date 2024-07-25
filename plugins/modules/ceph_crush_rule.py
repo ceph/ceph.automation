@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2020, Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,21 +18,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, \
-                                               generate_cmd, \
-                                               is_containerized, \
-                                               exec_command
-except ImportError:
-    from module_utils.ca_common import exit_module, \
-                                       generate_cmd, \
-                                       is_containerized, \
-                                       exec_command
-import datetime
-import json
-
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -40,7 +28,7 @@ DOCUMENTATION = '''
 ---
 module: ceph_crush_rule
 short_description: Manage Ceph Crush Replicated/Erasure Rule
-version_added: "2.8"
+version_added: "1.0.0"
 description:
     - Manage Ceph Crush rule(s) creation, deletion and updates.
 options:
@@ -48,48 +36,53 @@ options:
         description:
             - name of the Ceph Crush rule. If state is 'info' - empty string
               can be provided as a value to get all crush rules
-        required: true
+        type: str
+        required: false
     cluster:
         description:
             - The ceph cluster name.
+        type: str
         required: false
         default: ceph
     state:
         description:
-            If 'present' is used, the module creates a rule if it doesn't
-            exist or update it if it already exists.
-            If 'absent' is used, the module will simply delete the rule.
-            If 'info' is used, the module will return all details about the
-            existing rule (json formatted).
+            - If 'present' is used, the module creates a rule if it doesn't exist or update it if it already exists.
+            - If 'absent' is used, the module will simply delete the rule.
+            - If 'info' is used, the module will return all details about the existing rule (json formatted).
+        type: str
         required: false
-        choices: ['present', 'absent', 'info']
+        choices: ['present', 'absent']
         default: present
     rule_type:
         description:
             - The ceph CRUSH rule type.
+        type: str
         required: false
         choices: ['replicated', 'erasure']
-        required: false
     bucket_root:
         description:
             - The ceph bucket root for replicated rule.
+        type: str
         required: false
     bucket_type:
         description:
             - The ceph bucket type for replicated rule.
+        type: str
         required: false
         choices: ['osd', 'host', 'chassis', 'rack', 'row', 'pdu', 'pod',
                  'room', 'datacenter', 'zone', 'region', 'root']
     device_class:
         description:
             - The ceph device class for replicated rule.
+        type: str
         required: false
     profile:
         description:
             - The ceph erasure profile for erasure rule.
+        type: str
         required: false
 author:
-    - Dimitri Savineau <dsavinea@redhat.com>
+    - Dimitri Savineau (@dsavineau)
 '''
 
 EXAMPLES = '''
@@ -119,6 +112,21 @@ EXAMPLES = '''
 '''
 
 RETURN = '''#  '''
+
+from ansible.module_utils.basic import AnsibleModule
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, \
+        generate_cmd, \
+        is_containerized, \
+        exec_command
+except ImportError:
+    from module_utils.ceph_common import exit_module, \
+        generate_cmd, \
+        is_containerized, \
+        exec_command
+
+import datetime
+import json
 
 
 def create_rule(module, container_image=None):
@@ -192,7 +200,7 @@ def main():
         argument_spec=dict(
             name=dict(type='str', required=False),
             cluster=dict(type='str', required=False, default='ceph'),
-            state=dict(type='str', required=False, choices=['present', 'absent', 'info'], default='present'),  # noqa: E501
+            state=dict(type='str', required=False, choices=['present', 'absent'], default='present'),  # noqa: E501
             rule_type=dict(type='str', required=False, choices=['replicated', 'erasure']),  # noqa: E501
             bucket_root=dict(type='str', required=False),
             bucket_type=dict(type='str', required=False, choices=['osd', 'host', 'chassis', 'rack', 'row', 'pdu', 'pod',  # noqa: E501

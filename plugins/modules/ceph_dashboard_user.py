@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2020, Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,20 +18,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import generate_cmd, \
-                                               is_containerized, \
-                                               exec_command, \
-                                               exit_module, \
-                                               fatal
-except ImportError:
-    from module_utils.ca_common import generate_cmd, is_containerized, exec_command, exit_module, fatal  # noqa: E501
-
-import datetime
-import json
-
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -41,7 +30,7 @@ module: ceph_dashboard_user
 
 short_description: Manage Ceph Dashboard User
 
-version_added: "2.8"
+version_added: "1.0.0"
 
 description:
     - Manage Ceph Dashboard user(s) creation, deletion and updates.
@@ -49,34 +38,39 @@ options:
     cluster:
         description:
             - The ceph cluster name.
+        type: str
         required: false
         default: ceph
     name:
         description:
             - name of the Ceph Dashboard user.
+        type: str
         required: true
     state:
         description:
-            If 'present' is used, the module creates a user if it doesn't
-            exist or update it if it already exists.
-            If 'absent' is used, the module will simply delete the user.
-            If 'info' is used, the module will return all details about the
-            existing user (json formatted).
+            - If 'present' is used, the module creates a user if it doesn't exist or update it if it already exists.
+            - If 'absent' is used, the module will simply delete the user.
+            - If 'info' is used, the module will return all details about the existing user (json formatted).
+        type: str
         required: false
-        choices: ['present', 'absent', 'info']
+        choices: ['present', 'absent']
         default: present
     password:
         description:
             - password of the Ceph Dashboard user.
+        type: str
         required: false
     roles:
         description:
             - roles of the Ceph Dashboard user.
+        type: list
+        choices: ['administrator', 'read-only', 'block-manager', 'rgw-manager', 'cluster-manager', 'pool-manager', 'cephfs-manager']
+        elements: str
         required: false
         default: []
 
 author:
-    - Dimitri Savineau <dsavinea@redhat.com>
+    - Dimitri Savineau (@dsavineau)
 '''
 
 EXAMPLES = '''
@@ -113,6 +107,20 @@ EXAMPLES = '''
 RETURN = '''#  '''
 
 
+from ansible.module_utils.basic import AnsibleModule
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import generate_cmd, \
+        is_containerized, \
+        exec_command, \
+        exit_module, \
+        fatal
+except ImportError:
+    from module_utils.ceph_common import generate_cmd, is_containerized, exec_command, exit_module, fatal  # noqa: E501
+
+import datetime
+import json
+
+
 def create_user(module, container_image=None):
     '''
     Create a new user
@@ -121,7 +129,7 @@ def create_user(module, container_image=None):
     cluster = module.params.get('cluster')
     name = module.params.get('name')
 
-    args = ['ac-user-create', '-i', '-',  name]
+    args = ['ac-user-create', '-i', '-', name]
 
     cmd = generate_cmd(sub_cmd=['dashboard'],
                        args=args,
@@ -212,9 +220,10 @@ def run_module():
     module_args = dict(
         cluster=dict(type='str', required=False, default='ceph'),
         name=dict(type='str', required=True),
-        state=dict(type='str', required=False, choices=['present', 'absent', 'info'], default='present'),  # noqa: E501
+        state=dict(type='str', required=False, choices=['present', 'absent'], default='present'),  # noqa: E501
         password=dict(type='str', required=False, no_log=True),
         roles=dict(type='list',
+                   elements='str',
                    required=False,
                    choices=['administrator', 'read-only', 'block-manager', 'rgw-manager', 'cluster-manager', 'pool-manager', 'cephfs-manager'],  # noqa: E501
                    default=[]),

@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2020, Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,16 +18,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import fatal
-except ImportError:
-    from module_utils.ca_common import fatal
-import datetime
-import json
-import os
-
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -37,7 +30,7 @@ module: radosgw_zonegroup
 
 short_description: Manage RADOS Gateway Zonegroup
 
-version_added: "2.8"
+version_added: "1.0.0"
 
 description:
     - Manage RADOS Gateway zonegroup(s) creation, deletion and updates.
@@ -45,44 +38,50 @@ options:
     cluster:
         description:
             - The ceph cluster name.
+        type: str
         required: false
         default: ceph
     name:
         description:
             - name of the RADOS Gateway zonegroup.
+        type: str
         required: true
     state:
         description:
-            If 'present' is used, the module creates a zonegroup if it doesn't
-            exist or update it if it already exists.
-            If 'absent' is used, the module will simply delete the zonegroup.
-            If 'info' is used, the module will return all details about the
-            existing zonegroup (json formatted).
+            - If 'present' is used, the module creates a zonegroup if it doesn't exist or update it if it already exists.
+            - If 'absent' is used, the module will simply delete the zonegroup.
+            - If 'info' is used, the module will return all details about the existing zonegroup (json formatted).
+        type: str
         required: false
-        choices: ['present', 'absent', 'info']
+        choices: ['present', 'absent']
         default: present
     realm:
         description:
             - name of the RADOS Gateway realm.
+        type: str
         required: true
     endpoints:
         description:
             - endpoints of the RADOS Gateway zonegroup.
+        type: list
+        elements: str
         required: false
         default: []
     default:
         description:
             - set the default flag on the zonegroup.
+        type: bool
         required: false
         default: false
     master:
         description:
             - set the master flag on the zonegroup.
+        type: bool
         required: false
         default: false
 
 author:
-    - Dimitri Savineau <dsavinea@redhat.com>
+    - Dimitri Savineau (@dsavineau)
 '''
 
 EXAMPLES = '''
@@ -109,6 +108,16 @@ EXAMPLES = '''
 '''
 
 RETURN = '''#  '''
+
+import os
+import json
+import datetime
+from ansible.module_utils.basic import AnsibleModule
+
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import fatal
+except ImportError:
+    from module_utils.ceph_common import fatal
 
 
 def container_exec(binary, container_image):
@@ -327,9 +336,9 @@ def run_module():
     module_args = dict(
         cluster=dict(type='str', required=False, default='ceph'),
         name=dict(type='str', required=True),
-        state=dict(type='str', required=False, choices=['present', 'absent', 'info'], default='present'),  # noqa: E501
-        realm=dict(type='str', require=True),
-        endpoints=dict(type='list', require=False, default=[]),
+        state=dict(type='str', required=False, choices=['present', 'absent'], default='present'),  # noqa: E501
+        realm=dict(type='str', required=True),
+        endpoints=dict(type='list', elements='str', required=False, default=[]),
         default=dict(type='bool', required=False, default=False),
         master=dict(type='bool', required=False, default=False),
     )

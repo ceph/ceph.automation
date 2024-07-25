@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2020, Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,18 +18,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, \
-                                               generate_cmd, \
-                                               is_containerized
-except ImportError:
-    from module_utils.ca_common import exit_module, \
-                                       generate_cmd, \
-                                       is_containerized
-import datetime
-
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -37,30 +28,31 @@ DOCUMENTATION = '''
 ---
 module: ceph_osd_flag
 short_description: Manage Ceph OSD flag
-version_added: "2.8"
+version_added: "1.0.0"
 description:
     - Manage Ceph OSD flag
 options:
     name:
         description:
             - name of the ceph OSD flag.
+        type: str
         required: true
-        choices: ['noup', 'nodown', 'noout', 'nobackfill', 'norebalance',
-                 'norecover', 'noscrub', 'nodeep-scrub']
+        choices: ['noup', 'nodown', 'noout', 'nobackfill', 'norebalance', 'norecover', 'noscrub', 'nodeep-scrub']
     cluster:
         description:
             - The ceph cluster name.
+        type: str
         required: false
         default: ceph
     state:
         description:
-            - If 'present' is used, the module sets the OSD flag.
-            If 'absent' is used, the module will unset the OSD flag.
+            - If 'present' is used, the module sets the OSD flag. If 'absent' is used, the module will unset the OSD flag.
+        type: str
         required: false
         choices: ['present', 'absent']
         default: present
 author:
-    - Dimitri Savineau <dsavinea@redhat.com>
+    - Dimitri Savineau (@dsavineau)
 '''
 
 EXAMPLES = '''
@@ -78,6 +70,18 @@ EXAMPLES = '''
 '''
 
 RETURN = '''#  '''
+
+from ansible.module_utils.basic import AnsibleModule
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, \
+        generate_cmd, \
+        is_containerized
+except ImportError:
+    from module_utils.ceph_common import exit_module, \
+        generate_cmd, \
+        is_containerized
+
+import datetime
 
 
 def main():

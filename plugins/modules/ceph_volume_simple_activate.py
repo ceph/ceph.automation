@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright 2020, Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,15 +18,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module
-except ImportError:
-    from module_utils.ca_common import exit_module
-import datetime
-import os
-
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -34,7 +28,7 @@ DOCUMENTATION = '''
 ---
 module: ceph_volume_simple_activate
 short_description: Activate legacy OSD with ceph-volume
-version_added: "2.8"
+version_added: "1.0.0"
 description:
     - Activate legacy OSD with ceph-volume by providing the JSON file from
       the scan operation or by passing the OSD ID and OSD FSID.
@@ -42,32 +36,37 @@ options:
     cluster:
         description:
             - The ceph cluster name.
+        type: str
         required: false
         default: ceph
     path:
         description:
-            - The OSD metadata as JSON file in /etc/ceph/osd directory, it
-              must exist.
+            - The OSD metadata as JSON file in /etc/ceph/osd directory, it must exist.
+        type: path
         required: false
     osd_id:
         description:
             - The legacy OSD ID.
+        type: str
         required: false
     osd_fsid:
         description:
             - The legacy OSD FSID.
+        type: str
         required: false
     osd_all:
         description:
             - Activate all legacy OSDs.
+        type: bool
         required: false
     systemd:
         description:
             - Using systemd unit during the OSD activation.
+        type: bool
         required: false
         default: true
 author:
-    - Dimitri Savineau <dsavinea@redhat.com>
+    - Dimitri Savineau (@dsavineau)
 '''
 
 EXAMPLES = '''
@@ -95,6 +94,14 @@ EXAMPLES = '''
 '''
 
 RETURN = '''#  '''
+
+from ansible.module_utils.basic import AnsibleModule
+try:
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module
+except ImportError:
+    from module_utils.ceph_common import exit_module
+import datetime
+import os
 
 
 def main():

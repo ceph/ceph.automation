@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright Red Hat
 # SPDX-License-Identifier: Apache-2.0
 # Author: Guillaume Abrioux <gabrioux@redhat.com>
@@ -60,8 +63,7 @@ options:
         required: false
     set_admin_label:
         description:
-            - enforce '_admin' label on the host specified
-              in 'name'
+            - enforce '_admin' label on the host specified in 'name'
         type: bool
         required: false
         default: false
@@ -74,12 +76,9 @@ options:
         default: []
     state:
         description:
-            - if set to 'present', it will ensure the name specified
-              in 'name' will be present.
-            - if set to 'absent', it will remove the host specified in
-              'name'.
-            - if set to 'drain', it will schedule to remove all daemons
-              from the host specified in 'name'.
+            - if set to 'present', it will ensure the name specified in 'name' will be present.
+            - if set to 'absent', it will remove the host specified in 'name'.
+            - if set to 'drain', it will schedule to remove all daemons from the host specified in 'name'.
         choices:
             - present
             - absent
