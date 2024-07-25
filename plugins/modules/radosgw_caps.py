@@ -19,7 +19,7 @@ __metaclass__ = type
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from ansible.module_utils.ca_common import (
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import (
         exit_module,
         exec_command,
         is_containerized,

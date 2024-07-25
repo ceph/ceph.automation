@@ -17,7 +17,7 @@ __metaclass__ = type
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible.module_utils.ca_common import exit_module, generate_cmd, is_containerized  # noqa: E501
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, generate_cmd, is_containerized  # noqa: E501
 except ImportError:
     from module_utils.ca_common import exit_module, generate_cmd, is_containerized  # noqa: E501
 import datetime

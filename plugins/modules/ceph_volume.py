@@ -2,7 +2,7 @@
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible.module_utils.ca_common import exec_command, \
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exec_command, \
                                                is_containerized, \
                                                fatal
 except ImportError:

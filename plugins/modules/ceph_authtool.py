@@ -3,7 +3,7 @@ __metaclass__ = type
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible.module_utils.ca_common import container_exec, \
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import container_exec, \
                                                is_containerized
 except ImportError:
     from module_utils.ca_common import container_exec, \
