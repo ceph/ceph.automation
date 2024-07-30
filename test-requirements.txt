@@ -3,3 +3,5 @@ pytest-ansible
 pytest-xdist
 molecule
 mock
+boto
+boto3
