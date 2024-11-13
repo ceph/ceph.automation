@@ -1,0 +1,25 @@
+---
+ceph_defaults_ceph_origin: community
+ceph_defaults_ceph_dev_branch: main
+ceph_defaults_ceph_dev_sha1: latest
+ceph_defaults_ceph_rhcs_version: 8
+ceph_defaults_ceph_ibm_version: 8
+ceph_defaults_ceph_mirror: https://download.ceph.com
+ceph_defaults_ceph_stable_key: https://download.ceph.com/keys/release.asc
+ceph_defaults_ceph_community_repo_baseurll: "{{ ceph_defaults_ceph_mirror }}/rpm-{{ ceph_defaults_ceph_release }}/el{{ ansible_facts['distribution_major_version'] }}/"
+ceph_defaults_ceph_ibm_repo_baseurl: "https://public.dhe.ibm.com/ibmdl/export/pub/storage/ceph/{{ ceph_defaults_ceph_ibm_version }}/rhel{{ ansible_facts['distribution_major_version'] }}/"
+ceph_defaults_ceph_ibm_key: https://public.dhe.ibm.com/ibmdl/export/pub/storage/ceph/RPM-GPG-KEY-IBM-CEPH
+ceph_defaults_ceph_release: squid
+ceph_defaults_upgrade_ceph_packages: false
+ceph_defaults_ceph_pkgs:
+  - cephadm
+  - ceph-common
+ceph_defaults_ceph_client_pkgs:
+  - chrony
+  - ceph-common
+ceph_defaults_infra_pkgs:
+  - chrony
+  - podman
+  - lvm2
+  - sos
+ceph_defaults_client_group: clients

@@ -5,16 +5,16 @@
 
 namespace: "ceph"
 name: "automation"
-version: 1.0.1
+version: 1.1.0
 readme: README.md
 authors:
-  - Teoman ONAY <tonay@ibm.com>
+- Teoman ONAY <tonay@ibm.com>
 
 description: Ceph automation modules
 license_file: LICENSE
 # TO-DO: update the tags based on your content type
-tags: ["linux", "tools"]
-dependencies: {}
+tags: [ "linux", "tools" ]
+dependencies: { ansible.posix, community.general }
 
 repository: https://github.com/ceph/ceph.automation
 documentation: https://docs.ceph.com/projects/ceph.automation
@@ -26,9 +26,10 @@ issues: https://github.com/ceph/ceph.automation/issues
 # uses 'fnmatch' to match the files or directories. Some directories and files like 'galaxy.yml', '*.pyc', '*.retry',
 # and '.git' are always filtered. Mutually exclusive with 'manifest'
 build_ignore:
-  - .gitignore
-  - changelogs/.plugin-cache.yaml
-  - ".*"
+- .gitignore
+- changelogs/.plugin-cache.yaml
+- ".*"
+
 # A dict controlling use of manifest directives used in building the collection artifact. The key 'directives' is a
 # list of MANIFEST.in style
 # L(directives,https://packaging.python.org/en/latest/guides/using-manifest-in/#manifest-in-commands). The key
