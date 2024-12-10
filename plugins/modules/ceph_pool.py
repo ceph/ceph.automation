@@ -46,8 +46,9 @@ options:
     name:
         description:
             - name of the Ceph pool
+            - Required if I(state) is C(present) or C(present)
         type: str
-        required: true
+        required: false
     state:
         description:
             - If 'present' is used, the module creates a pool if it doesn't exist or update it if it already exists.
@@ -528,9 +529,9 @@ def update_pool(module, cluster, name,
 def run_module():
     module_args = dict(
         cluster=dict(type='str', required=False, default='ceph'),
-        name=dict(type='str', required=True),
+        name=dict(type='str', required=False),
         state=dict(type='str', required=False, default='present',
-                   choices=['present', 'absent']),
+                   choices=['present', 'absent', 'list']),
         details=dict(type='bool', required=False, default=False),
         size=dict(type='str', required=False, default='3'),
         min_size=dict(type='str', required=False),
@@ -563,6 +564,9 @@ def run_module():
     pg_autoscale_mode = module.params.get('pg_autoscale_mode')
     target_size_ratio = module.params.get('target_size_ratio')
     application = module.params.get('application')
+
+    if state != "list" and not name:
+        module.fail_json("state change requires a pool name")
 
     if (module.params.get('pg_autoscale_mode').lower() in
             ['true', 'on', 'yes']):
@@ -679,7 +683,7 @@ def run_module():
     elif state == "list":
         rc, cmd, out, err = exec_command(module,
                                          list_pools(cluster,
-                                                    name, user,
+                                                    user,
                                                     user_key,
                                                     details,
                                                     container_image=container_image))  # noqa: E501
