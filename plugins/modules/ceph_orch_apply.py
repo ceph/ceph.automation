@@ -111,7 +111,7 @@ def retrieve_current_spec(module: AnsibleModule, expected_spec: Dict) -> Dict:
         # if there is no existing service, cephadm returns the string 'No services reported'
         return {}
     else:
-        return yaml.safe_load(out[1])
+        return yaml.safe_load_all(out[1])
 
 
 def apply_spec(module: "AnsibleModule",
