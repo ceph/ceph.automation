@@ -120,10 +120,7 @@ def parse_spec(spec: str) -> Dict:
 def retrieve_current_spec(module: AnsibleModule, expected_spec: Dict) -> Dict:
     """ retrieve current config of the service """
     service: str = expected_spec["service_type"]
-    if "service_name" not in expected_spec.keys():
-        srv_name: str = "%s.%s" % (expected_spec["service_type"], expected_spec["service_id"])
-    else:
-         srv_name: str = expected_spec["service_name"]
+    srv_name: str = "%s.%s" % (expected_spec["service_type"], expected_spec["service_id"])
     cmd = build_base_cmd_orch(module)
     cmd.extend(['ls', service, srv_name, '--format=yaml'])
     out = module.run_command(cmd)
