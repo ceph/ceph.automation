@@ -32,7 +32,11 @@ module: ceph_orch_apply
 short_description: apply service spec
 version_added: "1.0.0"
 description:
-    - apply a service spec
+    - Manage and apply service specifications.
+    - This module is designed to apply a single service specification per execution.
+    - Multiple service specifications can be applied by using a loop.
+    - If any default key in the service specification is missing, the module will indicate a changed status.
+    - To prevent unnecessary changes, ensure all keys with their default values are included in the service specification.
 options:
     fsid:
         description:
@@ -60,16 +64,28 @@ author:
 '''
 
 EXAMPLES = '''
-- name: apply osd spec
-  ceph_orch_apply:
-    spec: |
-      service_type: osd
-      service_id: osd
+- name: apply cluster spec
+  ceph.automation.ceph_orch_apply:
+    spec: "{{ item }}"
+  loop:
+    - service_type: "nfs"
+      service_id: "iac"
       placement:
-        label: osds
+        count: 1
+        label: "nfs"
       spec:
-        data_devices:
-          all: true
+        port: 5001
+    - service_type: "ingress"
+      service_id: "nfs.iac"
+      placement:
+        count: 1
+        label: "nfs"
+      spec:
+        backend_service: "nfs.iac"
+        first_virtual_router_id: 51
+        frontend_port: 2049
+        monitor_port: 9001
+        virtual_ip: "172.16.20.11/24"
 '''
 
 RETURN = '''#  '''
