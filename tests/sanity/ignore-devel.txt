@@ -10,6 +10,8 @@ plugins/modules/ceph_crush_rule_info.py validate-modules:missing-gplv3-license #
 plugins/modules/ceph_dashboard_user.py validate-modules:missing-gplv3-license # ignore license check
 plugins/modules/ceph_ec_profile.py validate-modules:missing-gplv3-license # ignore license check
 plugins/modules/ceph_fs.py validate-modules:missing-gplv3-license # ignore license check
+plugins/modules/ceph_fs_volume.py validate-modules:missing-gplv3-license # ignore license check
+plugins/modules/ceph_fs_volume_info.py validate-modules:missing-gplv3-license # ignore license check
 plugins/modules/ceph_key.py validate-modules:missing-gplv3-license # ignore license check
 plugins/modules/ceph_key_info.py validate-modules:missing-gplv3-license # ignore license check
 plugins/modules/ceph_key_list.py validate-modules:missing-gplv3-license # ignore license check
