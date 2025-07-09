@@ -367,7 +367,7 @@ def compare_pool_config(user_pool_config, running_pool_details):
     '''
 
     delta = {}
-    filter_keys = ['pg_num', 'pg_placement_num', 'size',
+    filter_keys = ['pg_num', 'pg_placement_num', 'size', 'min_size',
                    'pg_autoscale_mode', 'target_size_ratio']
     for key in filter_keys:
         if (str(running_pool_details[key]) != user_pool_config[key]['value'] and  # noqa: E501
@@ -601,7 +601,7 @@ def run_module():
         'crush_rule': {'value': rule_name, 'cli_set_opt': 'crush_rule'},
         'expected_num_objects': {'value': expected_num_objects},
         'size': {'value': size, 'cli_set_opt': 'size'},
-        'min_size': {'value': min_size}
+        'min_size': {'value': min_size, 'cli_set_opt': 'min_size'}
     }
 
     startd = datetime.datetime.now()

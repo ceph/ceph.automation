@@ -130,7 +130,7 @@ class TestCephPoolModule(object):
                 'cli_set_opt': 'size'
             },
             'min_size': {
-                'value': '0',
+                'value': '1',
                 'cli_set_opt': 'min_size'
             },
             'pg_placement_num': {
