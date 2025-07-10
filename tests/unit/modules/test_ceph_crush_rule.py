@@ -1,22 +1,38 @@
-from mock.mock import patch
-import os
+from mock.mock import patch, MagicMock
 import pytest
 from ansible_collections.ceph.automation.tests.unit.modules import ca_test_common
 from ansible_collections.ceph.automation.plugins.modules import ceph_crush_rule, ceph_crush_rule_info
 
-fake_cluster = 'ceph'
-fake_container_binary = 'podman'
 fake_container_image = 'quay.io/ceph/daemon:latest'
 fake_name = 'foo'
 fake_bucket_root = 'default'
 fake_bucket_type = 'host'
 fake_device_class = 'ssd'
 fake_profile = 'default'
-fake_user = 'client.admin'
-fake_keyring = '/etc/ceph/{}.{}.keyring'.format(fake_cluster, fake_user)
 
 
 class TestCephCrushRuleModule(object):
+
+    def test_patch_crushmap_content(self):
+        module = MagicMock()
+        module.params = dict({
+            'name': fake_name,
+            'rule_type': 'replicated',
+            'bucket_root': fake_bucket_root,
+            'bucket_type': fake_bucket_type,
+            'device_class': fake_device_class,
+        })
+        original = ('# rules\nrule {} {{\n\tid 0\n\ttype replicated\n\tstep take {}\n\t'
+                    'step chooseleaf firstn 0 type {}\n\tstep emit\n}}\n'
+                    '# end crush map').format(fake_name, fake_bucket_root, fake_bucket_type)
+        patched = ('# rules\nrule {} {{\n\tid 0\n\ttype replicated\n\tstep take {} class {}\n\t'
+                   'step chooseleaf firstn 0 type {}\n\tstep emit\n}}\n'
+                   '# end crush map').format(fake_name, fake_bucket_root, fake_device_class, fake_bucket_type)
+
+        result = ceph_crush_rule.patch_content(module, crushmap_content=original)
+
+        assert result == patched
+
     @patch('ansible.module_utils.basic.AnsibleModule.fail_json')
     def test_with_name_only(self, m_fail_json):
         ca_test_common.set_module_args({
@@ -76,8 +92,7 @@ class TestCephCrushRuleModule(object):
 
         result = result.value.args[0]
         assert result['changed']
-        assert result['cmd'] == ['ceph', '-n', fake_user, '-k', fake_keyring,
-                                 '--cluster', fake_cluster, 'osd', 'crush', 'rule',
+        assert result['cmd'] == ['cephadm', 'shell', 'ceph', 'osd', 'crush', 'rule',
                                  'create-replicated', fake_name, fake_bucket_root, fake_bucket_type]
         assert result['rc'] == create_rc
         assert result['stderr'] == create_stderr
@@ -95,7 +110,8 @@ class TestCephCrushRuleModule(object):
         m_exit_json.side_effect = ca_test_common.exit_json
         rc = 0
         stderr = ''
-        stdout = '{{"rule_name":"{}","type":1,"steps":[{{"item_name":"{}"}},{{"type":"{}"}}]}}'.format(fake_name, fake_bucket_root, fake_bucket_type)
+        stdout = ('{{"rule_name":"{}","type":1,"steps":[{{"op":"take", "item_name":"{}"}},'
+                  '{{"op":"chooseleaf_firstn","type":"{}"}}]}}').format(fake_name, fake_bucket_root, fake_bucket_type)
         m_run_command.return_value = rc, stdout, stderr
 
         with pytest.raises(ca_test_common.AnsibleExitJson) as result:
@@ -103,8 +119,7 @@ class TestCephCrushRuleModule(object):
 
         result = result.value.args[0]
         assert not result['changed']
-        assert result['cmd'] == ['ceph', '-n', fake_user, '-k', fake_keyring,
-                                 '--cluster', fake_cluster, 'osd', 'crush', 'rule',
+        assert result['cmd'] == ['cephadm', 'shell', 'ceph', 'osd', 'crush', 'rule',
                                  'dump', fake_name, '--format=json']
         assert result['rc'] == 0
         assert result['stderr'] == stderr
@@ -137,8 +152,7 @@ class TestCephCrushRuleModule(object):
 
         result = result.value.args[0]
         assert result['changed']
-        assert result['cmd'] == ['ceph', '-n', fake_user, '-k', fake_keyring,
-                                 '--cluster', fake_cluster, 'osd', 'crush', 'rule',
+        assert result['cmd'] == ['cephadm', 'shell', 'ceph', 'osd', 'crush', 'rule',
                                  'create-replicated', fake_name, fake_bucket_root, fake_bucket_type, fake_device_class]
         assert result['rc'] == create_rc
         assert result['stderr'] == create_stderr
@@ -157,7 +171,11 @@ class TestCephCrushRuleModule(object):
         m_exit_json.side_effect = ca_test_common.exit_json
         rc = 0
         stderr = ''
-        stdout = '{{"rule_name":"{}","type":1,"steps":[{{"item_name":"{}"}},{{"type":"{}"}}]}}'.format(fake_name, fake_bucket_root, fake_bucket_type)
+        stdout = (
+            '{{"rule_name":"{}","type":1,"steps":[{{"op":"take","item_name":"{}~{}"}},'
+            '{{"op":"chooseleaf_firstn","type":"{}"}}]}}'
+        ).format(fake_name, fake_bucket_root, fake_device_class, fake_bucket_type)
+
         m_run_command.return_value = rc, stdout, stderr
 
         with pytest.raises(ca_test_common.AnsibleExitJson) as result:
@@ -165,8 +183,7 @@ class TestCephCrushRuleModule(object):
 
         result = result.value.args[0]
         assert not result['changed']
-        assert result['cmd'] == ['ceph', '-n', fake_user, '-k', fake_keyring,
-                                 '--cluster', fake_cluster, 'osd', 'crush', 'rule',
+        assert result['cmd'] == ['cephadm', 'shell', 'ceph', 'osd', 'crush', 'rule',
                                  'dump', fake_name, '--format=json']
         assert result['rc'] == 0
         assert result['stderr'] == stderr
@@ -197,8 +214,7 @@ class TestCephCrushRuleModule(object):
 
         result = result.value.args[0]
         assert result['changed']
-        assert result['cmd'] == ['ceph', '-n', fake_user, '-k', fake_keyring,
-                                 '--cluster', fake_cluster, 'osd', 'crush', 'rule',
+        assert result['cmd'] == ['cephadm', 'shell', 'ceph', 'osd', 'crush', 'rule',
                                  'create-erasure', fake_name, fake_profile]
         assert result['rc'] == create_rc
         assert result['stderr'] == create_stderr
@@ -223,16 +239,62 @@ class TestCephCrushRuleModule(object):
 
         result = result.value.args[0]
         assert not result['changed']
-        assert result['cmd'] == ['ceph', '-n', fake_user, '-k', fake_keyring,
-                                 '--cluster', fake_cluster, 'osd', 'crush', 'rule',
+        assert result['cmd'] == ['cephadm', 'shell', 'ceph', 'osd', 'crush', 'rule',
                                  'dump', fake_name, '--format=json']
         assert result['rc'] == 0
         assert result['stderr'] == stderr
         assert result['stdout'] == stdout
 
+    @patch('ansible_collections.ceph.automation.plugins.modules.ceph_crush_rule.install_crushmap')
+    @patch('ansible_collections.ceph.automation.plugins.modules.ceph_crush_rule.decompile_crushmap')
+    @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
+    @patch('ansible.module_utils.basic.AnsibleModule.run_command')
+    def test_udpate_existing_replicated_rule(
+            self, m_run_command, m_exit_json, m_decompile_crushmap, m_install_crushmap
+    ):
+        ca_test_common.set_module_args({
+            'name': fake_name,
+            'rule_type': 'replicated',
+            'bucket_root': fake_bucket_root,
+            'bucket_type': fake_bucket_type,
+        })
+        m_exit_json.side_effect = ca_test_common.exit_json
+        get_rc = 0
+        get_stderr = ''
+        # Stdout for rule WITH device_class
+        get_stdout = (
+            '{{"rule_name":"{}","type":1,"steps":[{{"op":"take","item_name":"{}~{}"}},'
+            '{{"op":"chooseleaf_firstn","type":"{}"}}]}}'
+        ).format(fake_name, fake_bucket_root, fake_device_class, fake_bucket_type)
+        m_run_command.return_value = get_rc, get_stdout, get_stderr
+
+        decomp_rc = 0
+        decomp_cmd = ['cephadm', 'shell', 'crushtool', '-d', 'binary_map', '-o', 'decompiled_map']
+        decomp_stderr = ''
+        decomp_stdout = ('# rules\nrule {} {{\n\tid 0\n\ttype replicated\n\tstep take {} class {}\n\t'
+                         'step chooseleaf firstn 0 type {}\n\tstep emit\n}}\n'
+                         '# end crush map').format(fake_name, fake_bucket_root, fake_device_class, fake_bucket_type)
+        m_decompile_crushmap.return_value = decomp_rc, decomp_cmd, decomp_stdout, decomp_stderr
+
+        install_rc = 0
+        install_cmd = ['cephadm', 'shell', 'ceph', 'osd', 'setcrushmap', '-i', 'binary_map']
+        install_stderr = ''
+        install_stdout = '30'
+        m_install_crushmap.return_value = install_rc, install_cmd, install_stdout, install_stderr
+
+        with pytest.raises(ca_test_common.AnsibleExitJson) as result:
+            ceph_crush_rule.main()
+
+        result = result.value.args[0]
+        assert result['changed']
+        assert result['cmd'] == install_cmd
+        assert result['rc'] == install_rc
+        assert result['stderr'] == install_stderr
+        assert result['stdout'] == install_stdout
+
     @patch('ansible.module_utils.basic.AnsibleModule.fail_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
-    def test_update_existing_replicated_rule(self, m_run_command, m_fail_json):
+    def test_convert_existing_replicated_rule(self, m_run_command, m_fail_json):
         ca_test_common.set_module_args({
             'name': fake_name,
             'rule_type': 'replicated',
@@ -257,7 +319,7 @@ class TestCephCrushRuleModule(object):
 
     @patch('ansible.module_utils.basic.AnsibleModule.fail_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
-    def test_update_existing_erasure_rule(self, m_run_command, m_fail_json):
+    def test_convert_existing_erasure_rule(self, m_run_command, m_fail_json):
         ca_test_common.set_module_args({
             'name': fake_name,
             'rule_type': 'erasure',
@@ -296,8 +358,7 @@ class TestCephCrushRuleModule(object):
 
         result = result.value.args[0]
         assert not result['changed']
-        assert result['cmd'] == ['ceph', '-n', fake_user, '-k', fake_keyring,
-                                 '--cluster', fake_cluster, 'osd', 'crush', 'rule',
+        assert result['cmd'] == ['cephadm', 'shell', 'ceph', 'osd', 'crush', 'rule',
                                  'dump', fake_name, '--format=json']
         assert result['rc'] == 0
         assert result['stderr'] == stderr
@@ -313,7 +374,8 @@ class TestCephCrushRuleModule(object):
         m_exit_json.side_effect = ca_test_common.exit_json
         get_rc = 0
         get_stderr = ''
-        get_stdout = '{{"rule_name":"{}","steps":[{{"item_name":"{}"}},{{"type":"{}"}}]}}'.format(fake_name, fake_bucket_root, fake_bucket_type)
+        get_stdout = ('{{"rule_name":"{}","steps":[{{"item_name":"{}"}},'
+                      '{{"type":"{}"}}]}}').format(fake_name, fake_bucket_root, fake_bucket_type)
         remove_rc = 0
         remove_stderr = ''
         remove_stdout = ''
@@ -327,8 +389,7 @@ class TestCephCrushRuleModule(object):
 
         result = result.value.args[0]
         assert result['changed']
-        assert result['cmd'] == ['ceph', '-n', fake_user, '-k', fake_keyring,
-                                 '--cluster', fake_cluster, 'osd', 'crush', 'rule',
+        assert result['cmd'] == ['cephadm', 'shell', 'ceph', 'osd', 'crush', 'rule',
                                  'rm', fake_name]
         assert result['rc'] == remove_rc
         assert result['stderr'] == remove_stderr
@@ -351,8 +412,7 @@ class TestCephCrushRuleModule(object):
 
         result = result.value.args[0]
         assert not result['changed']
-        assert result['cmd'] == ['ceph', '-n', fake_user, '-k', fake_keyring,
-                                 '--cluster', fake_cluster, 'osd', 'crush', 'rule',
+        assert result['cmd'] == ['cephadm', 'shell', 'ceph', 'osd', 'crush', 'rule',
                                  'dump', fake_name, '--format=json']
         assert result['rc'] == rc
         assert result['stderr'] == stderr
@@ -367,7 +427,8 @@ class TestCephCrushRuleModule(object):
         m_exit_json.side_effect = ca_test_common.exit_json
         rc = 0
         stderr = ''
-        stdout = '{{"rule_name":"{}","steps":[{{"item_name":"{}"}},{{"type":"{}"}}]}}'.format(fake_name, fake_bucket_root, fake_bucket_type)
+        stdout = ('{{"rule_name":"{}","steps":[{{"item_name":"{}"}},'
+                  '{{"type":"{}"}}]}}').format(fake_name, fake_bucket_root, fake_bucket_type)
         m_run_command.return_value = rc, stdout, stderr
 
         with pytest.raises(ca_test_common.AnsibleExitJson) as result:
@@ -375,8 +436,7 @@ class TestCephCrushRuleModule(object):
 
         result = result.value.args[0]
         assert not result['changed']
-        assert result['cmd'] == ['ceph', '-n', fake_user, '-k', fake_keyring,
-                                 '--cluster', fake_cluster, 'osd', 'crush', 'rule',
+        assert result['cmd'] == ['cephadm', 'shell', 'ceph', 'osd', 'crush', 'rule',
                                  'dump', fake_name, '--format=json']
         assert result['rc'] == rc
         assert result['stderr'] == stderr
@@ -391,7 +451,8 @@ class TestCephCrushRuleModule(object):
         m_exit_json.side_effect = ca_test_common.exit_json
         rc = 0
         stderr = ''
-        stdout = '{{"rule_name":"{}","steps":[{{"item_name":"{}"}},{{"type":"{}"}}]}}'.format(fake_name, fake_bucket_root, fake_bucket_type)
+        stdout = ('{{"rule_name":"{}","steps":[{{"item_name":"{}"}},'
+                  '{{"type":"{}"}}]}}').format(fake_name, fake_bucket_root, fake_bucket_type)
         m_run_command.return_value = rc, stdout, stderr
 
         with pytest.raises(ca_test_common.AnsibleExitJson) as result:
@@ -399,25 +460,24 @@ class TestCephCrushRuleModule(object):
 
         result = result.value.args[0]
         assert not result['changed']
-        assert result['cmd'] == ['ceph', '-n', fake_user, '-k', fake_keyring,
-                                 '--cluster', fake_cluster, 'osd', 'crush', 'rule',
+        assert result['cmd'] == ['cephadm', 'shell', 'ceph', 'osd', 'crush', 'rule',
                                  'dump', '', '--format=json']
         assert result['rc'] == rc
         assert result['stderr'] == stderr
         assert result['stdout'] == stdout
 
-    @patch.dict(os.environ, {'CEPH_CONTAINER_BINARY': fake_container_binary})
-    @patch.dict(os.environ, {'CEPH_CONTAINER_IMAGE': fake_container_image})
     @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
     @patch('ansible.module_utils.basic.AnsibleModule.run_command')
     def test_with_container(self, m_run_command, m_exit_json):
         ca_test_common.set_module_args({
-            'name': fake_name
+            'name': fake_name,
+            'image': fake_container_image
         })
         m_exit_json.side_effect = ca_test_common.exit_json
         rc = 0
         stderr = ''
-        stdout = '{{"rule_name":"{}","steps":[{{"item_name":"{}"}},{{"type":"{}"}}]}}'.format(fake_name, fake_bucket_root, fake_bucket_type)
+        stdout = ('{{"rule_name":"{}","steps":[{{"item_name":"{}"}},'
+                  '{{"type":"{}"}}]}}').format(fake_name, fake_bucket_root, fake_bucket_type)
         m_run_command.return_value = rc, stdout, stderr
 
         with pytest.raises(ca_test_common.AnsibleExitJson) as result:
@@ -425,14 +485,8 @@ class TestCephCrushRuleModule(object):
 
         result = result.value.args[0]
         assert not result['changed']
-        assert result['cmd'] == [fake_container_binary, 'run', '--rm', '--net=host',
-                                 '-v', '/etc/ceph:/etc/ceph:z',
-                                 '-v', '/var/lib/ceph/:/var/lib/ceph/:z',
-                                 '-v', '/var/log/ceph/:/var/log/ceph/:z',
-                                 '--entrypoint=ceph', fake_container_image,
-                                 '-n', fake_user, '-k', fake_keyring,
-                                 '--cluster', fake_cluster, 'osd', 'crush',
-                                 'rule', 'dump', fake_name, '--format=json']
+        assert result['cmd'] == ['cephadm', '--image', fake_container_image, 'shell', 'ceph',
+                                 'osd', 'crush', 'rule', 'dump', fake_name, '--format=json']
         assert result['rc'] == rc
         assert result['stderr'] == stderr
         assert result['stdout'] == stdout
