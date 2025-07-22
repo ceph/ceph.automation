@@ -465,6 +465,8 @@ def create_buckets(rgw, buckets, result):
         except TypeError:
             # it doesnt exist
             bucket_info = None
+        except radosgw.exception.NoSuchBucket:
+            bucket_info = None
 
         # if it exists add to failed list
         if bucket_info:
