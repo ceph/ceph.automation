@@ -622,9 +622,8 @@ def main():
 
     # conditional state caused a failure
     if result['added_users'] == '' and result['added_buckets'] == '':
-        module.fail_json(msg='No users or buckets were added successfully',
-                         **result)
-
+        result['changed'] = False
+ 
     # EXIT
     module.exit_json(**result)
 
