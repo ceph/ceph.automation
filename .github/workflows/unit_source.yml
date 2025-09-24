@@ -1,0 +1,144 @@
+name: Unit tests, dependencies from source
+on:
+  workflow_call:
+    inputs:
+      collection_pre_install:
+        required: false
+        type: string
+        default: ""
+      matrix_exclude:
+        # https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html#ansible-core-support-matrix
+        # 2.15 supports Python 3.9-3.11
+        # 2.16 supports Python 3.10-3.11
+        # 2.17 supports Python 3.10-3.12
+        # 2.18 supports Python 3.11-3.13
+        # 2.19 supports Python 3.11-3.13
+        # support for Python 3.13 added and 3.10 removed in 2.18 for control node
+        # target node supported Python 3.8-3.13 as of 2.18 and 2.19
+        # milestone is and devel is switched to 2.20 and drops support for Python 3.11
+        # https://docs.ansible.com/ansible/devel/roadmap/ROADMAP_2_18.html
+        default: >-
+          [
+            {
+              "ansible-version": "milestone",
+              "python-version": "3.11"
+            },
+            {
+              "ansible-version": "devel",
+              "python-version": "3.11"
+            },
+            {
+              "ansible-version": "stable-2.17",
+              "python-version": "3.13"
+            },
+            {
+              "ansible-version": "stable-2.16",
+              "python-version": "3.12"
+            },
+            {
+              "ansible-version": "stable-2.16",
+              "python-version": "3.13"
+            },
+            {
+              "ansible-version": "stable-2.15",
+              "python-version": "3.12"
+            },
+            {
+              "ansible-version": "stable-2.15",
+              "python-version": "3.13"
+            }
+          ]
+        required: false
+        type: string
+
+jobs:
+  unit_source:
+    env:
+      PY_COLORS: "1"
+      source_directory: "./source"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ansible-version:
+          # ansible-core 2.15 reached EOL on November 2024
+          - stable-2.16
+          - stable-2.17
+          - stable-2.18
+          - stable-2.19
+          - milestone
+          - devel
+        python-version:
+          # 2.16 supports Python 3.10-3.11
+          # 2.17 supports Python 3.10-3.12
+          # 2.18 supports Python 3.11-3.13
+          # - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+        exclude: ${{ fromJSON(inputs.matrix_exclude) }}
+    continue-on-error: ${{ matrix.ansible-version == 'devel' }}
+
+    name: "py${{ matrix.python-version }} / ${{ matrix.ansible-version }}"
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Checkout the collection repository
+        uses: ./.github/actions/checkout_dependency
+        with:
+          path: ${{ env.source_directory }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: "0"
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # ansible-pylibssh does not have cp312 wheels
+      # when building from sdist libssh-dev needs to be installed
+      # extra install step starts
+      - name: Install build toolchain and openssl headers on Linux
+        shell: bash
+        run: sudo apt update && sudo apt install build-essential libssl-dev
+        if: ${{ matrix.python-version >= 3.12 }}
+
+      - name: Install catchsegv and libssh headers on Linux for cythonize+coverage
+        shell: bash
+        run: sudo apt update && sudo apt install libssh-dev
+        if: ${{ matrix.python-version >= 3.12 }}
+      # extra install step ends
+
+      - name: Install ansible-core (${{ matrix.ansible-version }})
+        run: python3 -m pip install https://github.com/ansible/ansible/archive/${{ matrix.ansible-version }}.tar.gz --disable-pip-version-check
+
+      - name: Pre install collections dependencies first so the collection install does not
+        run: ansible-galaxy collection install --pre ${{ inputs.collection_pre_install }} -p /home/runner/collections
+        if: inputs.collection_pre_install != ''
+
+      - name: Read collection metadata from galaxy.yml
+        id: identify
+        uses: ./.github/actions/identify_collection
+        with:
+          source_path: ${{ env.source_directory }}
+
+      - name: Build and install the collection
+        uses: ./.github/actions/build_install_collection
+        with:
+          install_python_dependencies: true
+          source_path: ${{ env.source_directory }}
+          collection_path: ${{ steps.identify.outputs.collection_path }}
+          tar_file: ${{ steps.identify.outputs.tar_file }}
+          ansible_version: ${{ matrix.ansible-version }}
+
+      - name: Print the ansible version
+        run: ansible --version
+
+      - name: Print the python dependencies
+        run: python3 -m pip list
+
+      - name: Run unit tests
+        run: python -m pytest tests/unit --showlocals --ansible-host-pattern localhost
+        working-directory: ${{ steps.identify.outputs.collection_path }}
