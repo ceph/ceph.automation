@@ -73,7 +73,7 @@ runs:
 
     - name: identify collection (final installation path and tarball name)
       id: identify
-      uses: ./.github/actions/identify_collection@fix_CI
+      uses: ./.github/actions/identify_collection
       with:
         source_path: ${{ inputs.source_path }}
       if: ${{ (inputs.collection_path == '') || (inputs.tar_file == '') }}
