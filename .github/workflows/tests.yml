@@ -14,18 +14,18 @@ on: # yamllint disable-line rule:truthy
 
 jobs:
   changelog:
-    uses: ansible/ansible-content-actions/.github/workflows/changelog.yaml@551b3e26e5adb0bec13bf0de0983f98e0fa5a7f8
+    uses: ./.github/workflows/changelog.yaml
     if: github.event_name == 'pull_request'
   build-import:
-    uses: ansible/ansible-content-actions/.github/workflows/build_import.yaml@551b3e26e5adb0bec13bf0de0983f98e0fa5a7f8
+    uses: ./.github/workflows/build_import.yaml
   ansible-lint:
-    uses: ansible/ansible-content-actions/.github/workflows/ansible_lint.yaml@551b3e26e5adb0bec13bf0de0983f98e0fa5a7f8
+    uses: ./.github/workflows/ansible_lint.yaml
   sanity:
-    uses: ansible/ansible-content-actions/.github/workflows/sanity.yaml@551b3e26e5adb0bec13bf0de0983f98e0fa5a7f8
+    uses: ./.github/workflows/sanity.yaml
   unit-galaxy:
-    uses: ansible/ansible-content-actions/.github/workflows/unit.yaml@551b3e26e5adb0bec13bf0de0983f98e0fa5a7f8
+    uses: ./.github/workflows/unit.yaml
   unit-source:
-    uses: ansible-network/github_actions/.github/workflows/unit_source.yml@551b3e26e5adb0bec13bf0de0983f98e0fa5a7f
+    uses: ./.github/workflows/unit_source.yml
     with:
       collection_pre_install: >-
         git+https://github.com/ansible-collections/ansible.utils.git

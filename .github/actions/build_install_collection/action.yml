@@ -1,0 +1,101 @@
+name: Build and install the collection
+description: Build and install the collection
+
+inputs:
+  install_python_dependencies:
+    description: "Install collection python dependencies"
+    required: true
+  source_path:
+    description: "Path to the collection source"
+    required: true
+  collection_path:
+    description: |
+      The final collection path
+      If not set, this will be determined by the action
+    default: ""
+  tar_file:
+    description: |
+      The collection tarball when built
+      If not set, this will be determined by the action
+    default: ""
+  ansible_version:
+    description: |
+      Ansible Core version from the workflow.
+    required: false
+    default: ""
+outputs:
+  collection_path:
+    description: The final collection path
+    value: ${{ inputs.collection_path || steps.identify.outputs.collection_path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Show the galaxy.yml
+      run: cat galaxy.yml
+      shell: bash
+      working-directory: ${{ inputs.source_path }}
+
+    - name: check if bindep.txt exists
+      id: bindep_check
+      shell: bash
+      run: |
+        if test -f "bindep.txt"; then
+          echo "file_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "file_exists=false" >> $GITHUB_OUTPUT
+        fi
+      working-directory: ${{ inputs.source_path }}
+
+    - name: Install bindep from pypi
+      run: sudo python3 -m pip install bindep
+      shell: bash
+      if: steps.bindep_check.outputs.file_exists == 'true'
+
+    - name: Install missing system packages using bindep.txt
+      run: bindep test | tail -n +2 | xargs sudo apt-get -o Debug::pkgProblemResolver=true -o Debug::Acquire::http=true install -y || exit 0
+      shell: bash
+      working-directory: ${{ inputs.source_path }}
+      if: steps.bindep_check.outputs.file_exists == 'true'
+
+    - name: Check for missing system packages using bindep.txt
+      run: bindep test
+      shell: bash
+      working-directory: ${{ inputs.source_path }}
+      if: steps.bindep_check.outputs.file_exists == 'true'
+
+    - name: Install collection python requirements
+      if: ${{ inputs.install_python_dependencies == 'true' }}
+
+      run: python3 -m pip install -r requirements.txt -r test-requirements.txt
+      shell: bash
+      working-directory: ${{ inputs.source_path }}
+
+    - name: identify collection (final installation path and tarball name)
+      id: identify
+      uses: ./.github/actions/identify_collection@fix_CI
+      with:
+        source_path: ${{ inputs.source_path }}
+      if: ${{ (inputs.collection_path == '') || (inputs.tar_file == '') }}
+
+    - name: Build collection
+      run: ansible-galaxy collection build -vvv
+      shell: bash
+      working-directory: ${{ inputs.source_path }}
+
+    - name: Install collection and dependencies (with --pre flag)
+      run: ansible-galaxy collection install ./${{ steps.identify.outputs.tar_file || inputs.tar_file }} --pre -p /home/runner/collections
+      shell: bash
+      working-directory: ${{ inputs.source_path }}
+      if: ${{ inputs.ansible_version != 'stable-2.9' }}
+
+    - name: Install collection and dependencies (without --pre flag)
+      run: ansible-galaxy collection install ./${{ steps.identify.outputs.tar_file || inputs.tar_file }} -p /home/runner/collections
+      shell: bash
+      working-directory: ${{ inputs.source_path }}
+      if: ${{ inputs.ansible_version == 'stable-2.9' }}
+
+    - name: Copy the galaxy.yml from source to destination, needed for pytest-ansible-units
+      run: cp galaxy.yml ${{ steps.identify.outputs.collection_path || inputs.collection_path }}/galaxy.yml
+      shell: bash
+      working-directory: ${{ inputs.source_path }}
