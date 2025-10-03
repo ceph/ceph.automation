@@ -28,19 +28,24 @@ module: ceph_crush_rule_info
 short_description: Lists Ceph Crush Replicated/Erasure Rules
 version_added: "1.1.0"
 description:
-    - Retrieces Ceph Crush rule(s).
+    - Retrieves Ceph Crush rule(s).
 options:
     name:
         description:
-            - name of the Ceph Crush rule. If state is 'info' - empty string can be provided as a value to get all crush rules
+            - The name of the Ceph CRUSH rule.
+            - If no value is provided, all Ceph CRUSH rules are returned.
         type: str
         required: false
-    cluster:
+    fsid:
         description:
-            - The ceph cluster name.
+            - Identifier (FSID) of the Ceph cluster to interact with.
         type: str
         required: false
-        default: ceph
+    image:
+        description:
+            - The Ceph container image to use.
+        type: str
+        required: false
 author:
     - Teoman ONAY (@asm0deuz)
 '''
@@ -55,18 +60,15 @@ RETURN = '''#  '''
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, \
-        is_containerized, \
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import \
+        build_base_cmd_shell, \
+        exit_module, \
         exec_command
 except ImportError:
-    from module_utils.ceph_common import exit_module, \
-        is_containerized, \
+    from module_utils.ceph_common import \
+        build_base_cmd_shell, \
+        exit_module, \
         exec_command
-
-try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_crush_rule_common import get_rule
-except ImportError:
-    from module_utils.ceph_crush_rule_common import get_rule
 
 import datetime
 
@@ -75,31 +77,20 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', required=False),
-            cluster=dict(type='str', required=False, default='ceph'),
+            fsid=dict(type='str', required=False),
+            image=dict(type='str', required=False),
         ),
         supports_check_mode=True,
     )
 
-    if module.check_mode:
-        module.exit_json(
-            changed=False,
-            stdout='',
-            stderr='',
-            rc=0,
-            start='',
-            end='',
-            delta='',
-        )
-
     startd = datetime.datetime.now()
-    changed = False
 
-    # will return either the image name or None
-    container_image = is_containerized()
+    name = module.params.get('name')
+    cmd = build_base_cmd_shell(module)
+    cmd.extend(['ceph', 'osd', 'crush', 'rule', 'dump', name, '--format=json'])
+    rc, cmd, out, err = exec_command(module, cmd)
 
-    rc, cmd, out, err = exec_command(module, get_rule(module, container_image=container_image))  # noqa: E501
-
-    exit_module(module=module, out=out, rc=rc, cmd=cmd, err=err, startd=startd, changed=changed)  # noqa: E501
+    exit_module(module=module, out=out, rc=rc, cmd=cmd, err=err, startd=startd, changed=False)  # noqa: E501
 
 
 if __name__ == '__main__':
