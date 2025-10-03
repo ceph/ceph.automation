@@ -1,0 +1,2 @@
+bugfixes:
+  - "ceph_orch_apply - Fixed idempotency check for services that do not require the 'service_id' key in the specification and the 'host' service type (https://github.com/ceph/ceph.automation/pull/12)."

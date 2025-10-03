@@ -120,9 +120,19 @@ def parse_spec(spec: str) -> Dict:
 def retrieve_current_spec(module: AnsibleModule, expected_spec: Dict) -> Dict:
     """ retrieve current config of the service """
     service: str = expected_spec["service_type"]
-    srv_name: str = "%s.%s" % (expected_spec["service_type"], expected_spec["service_id"])
+    # Key "service_id" is mandatory only for exact subset of services.
+    # https://docs.ceph.com/en/latest/cephadm/services/#ceph.deployment.service_spec.ServiceSpec.service_id
+    if service in ["iscsi", "nvmeof", "mds", "nfs", "osd", "rgw", "container", "ingress"]:
+        srv_name: str = "%s.%s" % (service, expected_spec["service_id"])
+    else:
+        srv_name: str = service
     cmd = build_base_cmd_orch(module)
-    cmd.extend(['ls', service, srv_name, '--format=yaml'])
+    # Hosts are not services but can be deployed with `ceph orch apply` like regular services.
+    # And `ceph orch` has different syntax to list hosts.
+    if service != "host":
+        cmd.extend(['ls', service, srv_name, '--format=yaml'])
+    else:
+        cmd.extend(['host', 'ls', '--host-pattern', expected_spec['hostname'], '--format=yaml'])
     out = module.run_command(cmd)
     if isinstance(out, str):
         # if there is no existing service, cephadm returns the string 'No services reported'
@@ -148,13 +158,20 @@ def change_required(current: Dict, expected: Dict) -> bool:
     if not current:
         return True
 
+    # Listing of hosts never returns 'service_type', but expected spec has it.
+    if expected['service_type'] == 'host':
+        current['service_type'] = 'host'
+
     for key, value in expected.items():
         if key in current:
             if current[key] != value:
                 return True
             continue
         else:
-            return True
+            # "Location" key in the host spec is a one-time use key - it is not stored in the database.
+            # This key should not appear in the "current" spec, and it is safe to skip this key.
+            if key != 'location':
+                return True
     return False
 
 
