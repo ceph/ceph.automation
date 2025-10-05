@@ -1,5 +1,5 @@
 from mock.mock import MagicMock, patch
-import ca_test_common
+from ansible_collections.ceph.automation.tests.unit.modules import ca_test_common
 from ansible_collections.ceph.automation.plugins.modules import ceph_ec_profile
 import pytest
 
