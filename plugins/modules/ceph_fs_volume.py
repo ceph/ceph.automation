@@ -170,7 +170,7 @@ except ImportError:
 
 import datetime
 import json
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 
 def need_resize(module: AnsibleModule, stdout: str) -> bool:
@@ -204,9 +204,9 @@ def resize_fs_volume(
         module: AnsibleModule,
         name: str,
         volume_type: str,
-        parent_volume: str = None,
-        parent_group: str = None,
-        size: str = None
+        parent_volume: Optional[str] = None,
+        parent_group: Optional[str] = None,
+        size: Optional[str] = None
 ) -> Tuple[int, List[str], str, str]:
     """
     Resize a Ceph FS subvolume group or subvolume.
@@ -238,9 +238,9 @@ def create_fs_volume(
         module: AnsibleModule,
         name: str,
         volume_type: str,
-        parent_volume: str = None,
-        parent_group: str = None,
-        size: str = None
+        parent_volume: Optional[str] = None,
+        parent_group: Optional[str] = None,
+        size: Optional[str] = None
 ) -> Tuple[int, List[str], str, str]:
     """
     Create a Ceph FS volume, subvolume group or subvolume.
@@ -326,8 +326,8 @@ def remove_fs_volume(
         module: AnsibleModule,
         name: str,
         volume_type: str,
-        parent_volume: str = None,
-        parent_group: str = None
+        parent_volume: Optional[str] = None,
+        parent_group: Optional[str] = None
 ) -> Tuple[int, List[str], str, str]:
     """
     Remove the specified Ceph FS volume, subvolume group or subvolume.
