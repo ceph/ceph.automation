@@ -157,7 +157,7 @@ except ImportError:
 
 import datetime
 import json
-from typing import Tuple, List, Callable, Any
+from typing import Tuple, List, Callable, Optional, Any
 
 
 def get_descendants_info(
@@ -165,8 +165,8 @@ def get_descendants_info(
         lister_func: Callable,
         getter_func: Callable,
         descendant_type: str = 'volume',
-        parent_volume: str = None,
-        parent_group: str = None) -> Tuple[List[Any], int, List[str], str, str]:
+        parent_volume: Optional[str] = None,
+        parent_group: Optional[str] = None) -> Tuple[List[Any], int, List[str], str, str]:
     """
     List volumes, subvolume groups or subvolumes inside specified parent volume and/or group.
 
