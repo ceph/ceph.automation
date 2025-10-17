@@ -1,0 +1,6 @@
+minor_changes:
+  - >
+    ceph_crush_rule - refactored to use ``cephadm shell`` command and added the ability to update CRUSH rules.
+    (https://github.com/ceph/ceph.automation/pull/19).
+  - ceph_crush_rule_info - refactored to use ``cephadm shell`` command. (https://github.com/ceph/ceph.automation/pull/19).
+  - ceph_crush_rule_common - not used after the refactor and dropped. (https://github.com/ceph/ceph.automation/pull/19).
