@@ -1,0 +1,2 @@
+minor_changes:
+  - ceph_osd_flag - Added support for specifying a custom user key.
