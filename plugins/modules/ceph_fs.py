@@ -122,8 +122,9 @@ def create_fs(module, container_image=None):
     name = module.params.get('name')
     data = module.params.get('data')
     metadata = module.params.get('metadata')
-
-    args = ['new', name, metadata, data]
+    force = module.params.get('force')
+    
+    args = ['new', name, metadata, data, force]
 
     cmd = generate_cmd(sub_cmd=['fs'],
                        args=args,
@@ -214,6 +215,7 @@ def run_module():
         data=dict(type='str', required=False),
         metadata=dict(type='str', required=False),
         max_mds=dict(type='int', required=False),
+        force=dict(type='str', required=False, choices=['True', 'False'],default='False')
     )
 
     module = AnsibleModule(
@@ -226,7 +228,8 @@ def run_module():
     name = module.params.get('name')
     state = module.params.get('state')
     max_mds = module.params.get('max_mds')
-
+    force = module.params.get('force')
+    
     if module.check_mode:
         module.exit_json(
             changed=False,
