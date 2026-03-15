@@ -549,7 +549,7 @@ def run_module():
         rule_name=dict(type='str', required=False, default=None),
         expected_num_objects=dict(type='str', required=False, default="0"),
         application=dict(type='str', required=False, default=None),
-        user_key=dict(type='str', required=False, default=None),
+        user_key=dict(type='str', required=False, default=None, no_log=False),
     )
 
     module = AnsibleModule(
@@ -620,8 +620,8 @@ def run_module():
     user = "client.admin"
 
     if not user_key:
-      keyring_filename = cluster + '.' + user + '.keyring'
-      user_key = os.path.join("/etc/ceph/", keyring_filename)
+        keyring_filename = cluster + '.' + user + '.keyring'
+        user_key = os.path.join("/etc/ceph/", keyring_filename)
 
     if state == "present":
         rc, cmd, out, err = exec_command(module,
