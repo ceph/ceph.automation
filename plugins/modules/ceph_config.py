@@ -54,9 +54,16 @@ options:
             - value of the parameter
         type: str
         required: false
+    orchestrator_enabled:
+        description:
+            - Whether ceph orchestrator is enabled. E.g. cephadm can be used.
+        type: bool
+        required: false
+        default: true
 
 author:
     - guillaume abrioux (@guits)
+    - taavi ansper (@tafkamax)
 '''
 
 EXAMPLES = '''
@@ -80,6 +87,14 @@ EXAMPLES = '''
     who: global
     option: osd_pool_default_size
     value: 1
+
+- name: set rgw_frontends config
+  ceph_config:
+    action: set
+    who: client.rgw
+    option: rgw_frontends
+    value: beast ssl_port=9943
+    orchestrator_enabled: false
 '''
 
 RETURN = '''#  '''
@@ -99,7 +114,10 @@ def set_option(module: "AnsibleModule",
                who: str,
                option: str,
                value: str) -> Tuple[int, List[str], str, str]:
-    cmd = build_base_cmd_shell(module)
+    if module.params.get('orchestrator_enabled'):
+      cmd = build_base_cmd_shell(module)
+    else:
+      cmd = []
     cmd.extend(['ceph', 'config', 'set', who, option, value])
 
     rc, out, err = module.run_command(cmd)
@@ -108,7 +126,10 @@ def set_option(module: "AnsibleModule",
 
 
 def get_config_dump(module: "AnsibleModule") -> Tuple[int, List[str], str, str]:
-    cmd = build_base_cmd_shell(module)
+    if module.params.get('orchestrator_enabled'):
+      cmd = build_base_cmd_shell(module)
+    else:
+      cmd = []
     cmd.extend(['ceph', 'config', 'dump', '--format', 'json'])
     rc, out, err = module.run_command(cmd)
     if rc:
@@ -132,7 +153,8 @@ def main() -> None:
             option=dict(type='str', required=True),
             value=dict(type='str', required=False),
             fsid=dict(type='str', required=False),
-            image=dict(type='str', required=False)
+            image=dict(type='str', required=False),
+            orchestrator_enabled=dict(type=bool, required=False, default=True)
         ),
         supports_check_mode=True,
         required_if=[['action', 'set', ['value']]]
@@ -143,6 +165,7 @@ def main() -> None:
     option = module.params.get('option')
     value = module.params.get('value')
     action = module.params.get('action')
+    orchestrator_enabled = module.params.get('orchestator_enabled')
 
     if module.check_mode:
         module.exit_json(
