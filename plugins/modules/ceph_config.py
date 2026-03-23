@@ -165,7 +165,7 @@ def main() -> None:
     option = module.params.get('option')
     value = module.params.get('value')
     action = module.params.get('action')
-    orchestrator_enabled = module.params.get('orchestator_enabled')
+    orchestrator_enabled = module.params.get('orchestrator_enabled')
 
     if module.check_mode:
         module.exit_json(
