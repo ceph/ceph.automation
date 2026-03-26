@@ -67,6 +67,13 @@ options:
         elements: str
         required: false
         default: []
+    hostnames:
+        description:
+            - hostnames of the RADOS Gateway zonegroup.
+        type: list
+        elements: str
+        required: false
+        default: []
     default:
         description:
             - set the default flag on the zonegroup.
@@ -92,6 +99,9 @@ EXAMPLES = '''
     endpoints:
       - http://192.168.1.10:8080
       - http://192.168.1.11:8080
+    hostnames:
+      - ceph1.example.org
+      - ceph2.example.org
     default: true
 
 - name: get a RADOS Gateway zonegroup information
@@ -199,6 +209,7 @@ def create_zonegroup(module, container_image=None):
     name = module.params.get('name')
     realm = module.params.get('realm')
     endpoints = module.params.get('endpoints')
+    hostnames = module.params.get('hostnames')
     default = module.params.get('default')
     master = module.params.get('master')
 
@@ -206,6 +217,9 @@ def create_zonegroup(module, container_image=None):
 
     if endpoints:
         args.extend(['--endpoints=' + ','.join(endpoints)])
+
+    if hostnames:
+        args.extend(['--hostnames=' + ','.join(hostnames)])
 
     if default:
         args.append('--default')
@@ -229,6 +243,7 @@ def modify_zonegroup(module, container_image=None):
     name = module.params.get('name')
     realm = module.params.get('realm')
     endpoints = module.params.get('endpoints')
+    hostnames = module.params.get('hostnames')
     default = module.params.get('default')
     master = module.params.get('master')
 
@@ -236,6 +251,9 @@ def modify_zonegroup(module, container_image=None):
 
     if endpoints:
         args.extend(['--endpoints=' + ','.join(endpoints)])
+
+    if hostnames:
+        args.extend(['--hostnames=' + ','.join(hostnames)])
 
     if default:
         args.append('--default')
@@ -339,6 +357,7 @@ def run_module():
         state=dict(type='str', required=False, choices=['present', 'absent'], default='present'),  # noqa: E501
         realm=dict(type='str', required=True),
         endpoints=dict(type='list', elements='str', required=False, default=[]),
+        hostnames=dict(type='list', elements='str', required=False, default=[]),
         default=dict(type='bool', required=False, default=False),
         master=dict(type='bool', required=False, default=False),
     )
@@ -352,6 +371,7 @@ def run_module():
     name = module.params.get('name')
     state = module.params.get('state')
     endpoints = module.params.get('endpoints')
+    hostnames = module.params.get('hostnames')
     master = module.params.get('master')
 
     startd = datetime.datetime.now()
@@ -370,11 +390,13 @@ def run_module():
             realm = json.loads(_out)
             current = {
                 'endpoints': zonegroup['endpoints'],
+                'hostnames': zonegroup['hostnames'],
                 'master': zonegroup.get('is_master', False),
                 'realm_id': zonegroup['realm_id']
             }
             asked = {
                 'endpoints': endpoints,
+                'hostnames': hostnames,
                 'master': master,
                 'realm_id': realm['id']
             }
