@@ -34,9 +34,9 @@ options:
         required: false
     action:
         description:
-            - whether to get or set the parameter specified in 'option'
+            - whether to get, set, or remove the parameter specified in 'option'
         type: str
-        choices: ['get', 'set']
+        choices: ['get', 'set','remove']
         default: 'set'
         required: false
     who:
@@ -79,7 +79,14 @@ EXAMPLES = '''
     action: get
     who: global
     option: osd_pool_default_size
-    value: 1
+    
+
+- name: remove osd_memory_target override
+  ceph_config:
+    action: remove
+    who: osd
+    option: osd_memory_target
+
 '''
 
 RETURN = '''#  '''
@@ -105,7 +112,15 @@ def set_option(module: "AnsibleModule",
     rc, out, err = module.run_command(cmd)
 
     return rc, cmd, out.strip(), err
+def remove_option(module: "AnsibleModule",
+                  who: str,
+                  option: str) -> Tuple[int, List[str], str, str]:
+    cmd = build_base_cmd_shell(module)
+    cmd.extend(['ceph', 'config', 'rm', who, option])
+    rc, out, err = module.run_command(cmd)
+    return rc, cmd, out.strip(), err
 
+  
 
 def get_config_dump(module: "AnsibleModule") -> Tuple[int, List[str], str, str]:
     cmd = build_base_cmd_shell(module)
@@ -128,7 +143,7 @@ def main() -> None:
     module = AnsibleModule(
         argument_spec=dict(
             who=dict(type='str', required=True),
-            action=dict(type='str', required=False, choices=['get', 'set'], default='set'),
+            action=dict(type='str', required=False, choices=['get', 'set','remove'], default='set'),
             option=dict(type='str', required=True),
             value=dict(type='str', required=False),
             fsid=dict(type='str', required=False),
@@ -144,18 +159,6 @@ def main() -> None:
     value = module.params.get('value')
     action = module.params.get('action')
 
-    if module.check_mode:
-        module.exit_json(
-            changed=False,
-            stdout='',
-            cmd=[],
-            stderr='',
-            rc=0,
-            start='',
-            end='',
-            delta='',
-        )
-
     startd = datetime.datetime.now()
     changed = False
 
@@ -164,11 +167,30 @@ def main() -> None:
     current_value = get_current_value(who, option, config_dump)
 
     if action == 'set':
-        if value.lower() == current_value:
+        if str(value).lower() == str(current_value).lower():
             out = 'who={} option={} value={} already set. Skipping.'.format(who, option, value)
         else:
-            rc, cmd, out, err = set_option(module, who, option, value)
-            changed = True
+            if module.check_mode:
+                out = 'who={} option={} would be set to {}'.format(who, option, value)
+                changed = True
+            else:
+                rc, cmd, out, err = set_option(module, who, option, value)
+                if rc != 0:
+                    module.fail_json(msg=err, cmd=cmd, rc=rc)
+                changed = True
+
+    elif action == 'remove':
+        if current_value is None:
+            out = 'who={} option={} already absent. Skipping.'.format(who, option)
+        else:
+            if module.check_mode:
+                out = 'who={} option={} would be removed'.format(who, option)
+                changed = True
+            else:
+                rc, cmd, out, err = remove_option(module, who, option)
+                if rc != 0:
+                    module.fail_json(msg=err, cmd=cmd, rc=rc)
+                changed = True
     else:
         if current_value is None:
             out = ''
