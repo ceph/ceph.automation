@@ -70,7 +70,11 @@ options:
             - name of the max_mds attribute.
         type: int
         required: false
-
+    force:
+        description:
+            - parameter to allow use of ec-data-pools in cephfs creation
+        type: str
+        choices: ['True', 'False']
 
 author:
     - Dimitri Savineau (@dsavineau)
@@ -83,6 +87,14 @@ EXAMPLES = '''
     data: bar_data
     metadata: bar_metadata
     max_mds: 2
+
+- name: create a Ceph File System and allow erasure coded pools
+  ceph_fs:
+    name: foo
+    data: bar_data
+    metadata: bar_metadata
+    max_mds: 2
+    force: 'True'
 
 - name: get a Ceph File System information
   ceph_fs:
@@ -122,8 +134,9 @@ def create_fs(module, container_image=None):
     name = module.params.get('name')
     data = module.params.get('data')
     metadata = module.params.get('metadata')
-
-    args = ['new', name, metadata, data]
+    force = module.params.get('force')
+    
+    args = ['new', name, metadata, data, force]
 
     cmd = generate_cmd(sub_cmd=['fs'],
                        args=args,
@@ -214,6 +227,7 @@ def run_module():
         data=dict(type='str', required=False),
         metadata=dict(type='str', required=False),
         max_mds=dict(type='int', required=False),
+        force=dict(type='str', required=False, choices=['True', 'False'],default='False')
     )
 
     module = AnsibleModule(
@@ -226,7 +240,8 @@ def run_module():
     name = module.params.get('name')
     state = module.params.get('state')
     max_mds = module.params.get('max_mds')
-
+    force = module.params.get('force')
+    
     if module.check_mode:
         module.exit_json(
             changed=False,
