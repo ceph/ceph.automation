@@ -70,7 +70,11 @@ options:
             - name of the max_mds attribute.
         type: int
         required: false
-
+    force:
+        description:
+            - parameter to allow use of ec-data-pools in cephfs creation
+        type: str
+        choices: ['True', 'False']
 
 author:
     - Dimitri Savineau (@dsavineau)
@@ -83,6 +87,14 @@ EXAMPLES = '''
     data: bar_data
     metadata: bar_metadata
     max_mds: 2
+
+- name: create a Ceph File System and allow erasure coded pools
+  ceph_fs:
+    name: foo
+    data: bar_data
+    metadata: bar_metadata
+    max_mds: 2
+    force: 'True'
 
 - name: get a Ceph File System information
   ceph_fs:
