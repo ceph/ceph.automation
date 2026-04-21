@@ -37,6 +37,8 @@ description:
     - Multiple service specifications can be applied by using a loop.
     - If any default key in the service specification is missing, the module will indicate a changed status.
     - To prevent unnecessary changes, ensure all keys with their default values are included in the service specification.
+extends_documentation_fragment:
+  - ceph.automation.ceph_cli
 options:
     fsid:
         description:
@@ -106,9 +108,13 @@ import datetime
 
 from ansible.module_utils.basic import AnsibleModule  # type: ignore
 try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, build_base_cmd_orch  # type: ignore
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import (  # type: ignore
+        exit_module,
+        build_base_cmd_orch,
+        CEPH_CLI_SHARED_OPTIONS,
+    )
 except ImportError:
-    from module_utils.ceph_common import exit_module, build_base_cmd_orch
+    from module_utils.ceph_common import exit_module, build_base_cmd_orch, CEPH_CLI_SHARED_OPTIONS  # type: ignore
 
 
 def parse_spec(spec: str) -> Dict:
@@ -178,6 +184,7 @@ def change_required(current: Dict, expected: Dict) -> bool:
 def run_module() -> None:
 
     module_args = dict(
+        **CEPH_CLI_SHARED_OPTIONS,
         spec=dict(type='str', required=True),
         fsid=dict(type='str', required=False),
         docker=dict(type='bool',

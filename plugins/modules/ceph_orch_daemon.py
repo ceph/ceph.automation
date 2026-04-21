@@ -60,6 +60,8 @@ options:
             - The type of the service.
         type: str
         required: true
+extends_documentation_fragment:
+  - ceph.automation.ceph_cli
 
 author:
     - Guillaume Abrioux (@guits)
@@ -83,9 +85,21 @@ RETURN = '''#  '''
 
 from ansible.module_utils.basic import AnsibleModule  # type: ignore
 try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import retry, exit_module, build_base_cmd_orch, fatal  # type: ignore
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import (  # type: ignore
+        retry,
+        exit_module,
+        build_base_cmd_orch,
+        fatal,
+        CEPH_CLI_SHARED_OPTIONS,
+    )
 except ImportError:
-    from module_utils.ceph_common import retry, exit_module, build_base_cmd_orch, fatal  # type: ignore
+    from module_utils.ceph_common import (  # type: ignore
+        retry,
+        exit_module,
+        build_base_cmd_orch,
+        fatal,
+        CEPH_CLI_SHARED_OPTIONS,
+    )
 
 from typing import List, Tuple
 import datetime
@@ -129,6 +143,7 @@ def validate_updated_status(module: "AnsibleModule",
 def main() -> None:
     module = AnsibleModule(
         argument_spec=dict(
+            **CEPH_CLI_SHARED_OPTIONS,
             state=dict(type='str',
                        required=True,
                        choices=['started', 'stopped', 'restarted']),
