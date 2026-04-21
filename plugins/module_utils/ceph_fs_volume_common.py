@@ -6,9 +6,9 @@ from ansible.module_utils.basic import AnsibleModule
 
 try:
     from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import \
-        exec_command, build_base_cmd_shell
+        exec_command, build_base_cmd_shell, append_shell_ceph_subargs
 except ImportError:
-    from module_utils.ceph_common import exec_command, build_base_cmd_shell
+    from module_utils.ceph_common import exec_command, build_base_cmd_shell, append_shell_ceph_subargs
 
 from typing import List, Tuple, Union
 
@@ -30,7 +30,7 @@ def list_fs_volumes(
     """
 
     list_fs = build_base_cmd_shell(module)
-    list_fs.extend(['ceph', 'fs'])
+    append_shell_ceph_subargs(module, list_fs, ['fs'])
 
     if volume_type == 'volume':
         list_fs.extend(['volume', 'ls', '--format=json'])
@@ -61,7 +61,7 @@ def get_fs_volume(
     """
 
     get_fs = build_base_cmd_shell(module)
-    get_fs.extend(['ceph', 'fs'])
+    append_shell_ceph_subargs(module, get_fs, ['fs'])
 
     if volume_type == 'volume':
         get_fs.extend(['volume', 'info', name, '--format=json'])

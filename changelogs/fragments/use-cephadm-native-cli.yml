@@ -1,0 +1,8 @@
+---
+minor_changes:
+  - >-
+    Add ``use_cephadm`` (default ``true``) and ``cluster``, ``ceph_client``, ``keyring`` for
+    running Ceph commands through ``cephadm shell`` or the host ``ceph`` binary; register the
+    ``ceph_cli`` action group for ``module_defaults``; add the ``ceph.automation.ceph_cli`` doc
+    fragment; document usage in the README
+    (https://github.com/ceph/ceph.automation/pull/40).

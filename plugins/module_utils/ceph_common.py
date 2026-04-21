@@ -6,6 +6,13 @@ import os
 import time
 from typing import TYPE_CHECKING, Any, List, Dict, Callable, Type, TypeVar, Optional
 
+CEPH_CLI_SHARED_OPTIONS = dict(
+    use_cephadm=dict(type='bool', required=False, default=True),
+    cluster=dict(type='str', required=False, default='ceph'),
+    ceph_client=dict(type='str', required=False, default='client.admin'),
+    keyring=dict(type='str', required=False, default=None, no_log=True),
+)
+
 if TYPE_CHECKING:
     from ansible.module_utils.basic import AnsibleModule  # type: ignore
 
@@ -121,7 +128,54 @@ def retry(exceptions: Type[ExceptionType], module: "AnsibleModule", retries: int
     return decorator
 
 
+def module_use_cephadm(module: "AnsibleModule") -> bool:
+    '''
+    Resolve whether to run Ceph through cephadm shell or the host ceph binary (default true).
+    '''
+    params = getattr(module, 'params', None) or {}
+    return bool(params.get('use_cephadm', True))
+
+
+def build_native_ceph_prefix(module: "AnsibleModule") -> List[str]:
+    '''
+    Build ceph with cluster authentication for non-Cephadm hosts.
+    '''
+    cluster = module.params.get('cluster') or 'ceph'
+    ceph_client = module.params.get('ceph_client') or 'client.admin'
+    keyring = module.params.get('keyring')
+    if not keyring:
+        keyring = '/etc/ceph/{}.{}.keyring'.format(cluster, ceph_client)
+    return ['ceph', '-n', ceph_client, '-k', keyring, '--cluster', cluster]
+
+
+def append_shell_ceph_subargs(module: "AnsibleModule", cmd: List[str], argv: List[str]) -> None:
+    '''
+    Append arguments to ceph in cephadm shell ceph ...,
+    or follow the host ceph when use_cephadm is false.
+
+    :param argv: e.g. ['config', 'set', 'mon', 'foo', 'bar'] without a leading ceph.
+    '''
+    if module_use_cephadm(module):
+        cmd.extend(['ceph'] + argv)
+    else:
+        cmd.extend(argv)
+
+
+def append_cephadm_shell_tmpdir_mount(module: "AnsibleModule", cmd: List[str], tmpdirname: str) -> None:
+    '''
+    Append cephadm shell --mount options so a host temp directory is visible in the container.
+    No-op when use_cephadm is false.
+    '''
+    if not module_use_cephadm(module):
+        return
+    cmd.extend(['--mount', '{0}:{0}'.format(tmpdirname), '--'])
+
+
 def build_base_cmd(module: "AnsibleModule") -> List[str]:
+    if not module_use_cephadm(module):
+        module.fail_json(
+            msg='This module only supports Cephadm. Set use_cephadm to true or use a different module.'
+        )
     cmd = ['cephadm']
     docker = module.params.get('docker')
     image = module.params.get('image')
@@ -135,21 +189,22 @@ def build_base_cmd(module: "AnsibleModule") -> List[str]:
 
 
 def build_base_cmd_shell(module: "AnsibleModule") -> List[str]:
-    cmd = build_base_cmd(module)
-    fsid = module.params.get('fsid')
+    if module_use_cephadm(module):
+        cmd = build_base_cmd(module)
+        fsid = module.params.get('fsid')
 
-    cmd.append('shell')
+        cmd.append('shell')
 
-    if fsid:
-        cmd.extend(['--fsid', fsid])
+        if fsid:
+            cmd.extend(['--fsid', fsid])
 
-    return cmd
+        return cmd
+    return build_native_ceph_prefix(module)
 
 
 def build_base_cmd_orch(module: "AnsibleModule") -> List[str]:
     cmd = build_base_cmd_shell(module)
-    cmd.extend(['ceph', 'orch'])
-
+    append_shell_ceph_subargs(module, cmd, ['orch'])
     return cmd
 
 

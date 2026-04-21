@@ -33,6 +33,8 @@ short_description: Log in to container registry
 version_added: "1.0.0"
 description:
     - Call cephadm registry-login command for logging in to container registry
+extends_documentation_fragment:
+  - ceph.automation.ceph_cli
 options:
     state:
         description:
@@ -95,9 +97,21 @@ from typing import List, Tuple
 
 from ansible.module_utils.basic import AnsibleModule  # type: ignore
 try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, build_base_cmd, fatal  # type: ignore
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import (  # type: ignore
+        exit_module,
+        build_base_cmd,
+        fatal,
+        module_use_cephadm,
+        CEPH_CLI_SHARED_OPTIONS,
+    )
 except ImportError:
-    from module_utils.ceph_common import exit_module, build_base_cmd, fatal
+    from module_utils.ceph_common import (  # type: ignore
+        exit_module,
+        build_base_cmd,
+        fatal,
+        module_use_cephadm,
+        CEPH_CLI_SHARED_OPTIONS,
+    )
 
 
 def build_base_container_cmd(module: "AnsibleModule", action: str = 'login') -> List[str]:
@@ -146,6 +160,7 @@ def do_login_or_logout(module: "AnsibleModule", action: str = 'login') -> Tuple[
 def main() -> None:
     module = AnsibleModule(
         argument_spec=dict(
+            **CEPH_CLI_SHARED_OPTIONS,
             state=dict(type='str', required=False, default='login', choices=['login', 'logout']),
             docker=dict(type='bool',
                         required=False,
@@ -170,6 +185,10 @@ def main() -> None:
             ['state', 'logout', ['registry_url']]
         ]
     )
+    if not module_use_cephadm(module):
+        module.fail_json(
+            msg='cephadm_registry_login requires Cephadm. This module cannot run with use_cephadm=false.'
+        )
     startd = datetime.datetime.now()
     changed = False
     cmd = build_base_cmd(module)

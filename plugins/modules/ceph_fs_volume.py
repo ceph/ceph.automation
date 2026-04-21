@@ -35,6 +35,8 @@ description:
     - Module provides creation, deletion and updates of volumes, subvolume groups and subvolumes.
     - Not all methods (such as tree pinning) are supported at the time.
     - This module intended to work only with orchestrated Ceph deployments (Cephadm).
+extends_documentation_fragment:
+  - ceph.automation.ceph_cli
 options:
     fsid:
         description:
@@ -161,11 +163,17 @@ from ansible.module_utils.basic import AnsibleModule
 
 try:
     from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import \
-        exec_command, build_base_cmd_shell, exit_module
+        exec_command, build_base_cmd_shell, exit_module, append_shell_ceph_subargs, CEPH_CLI_SHARED_OPTIONS
     from ansible_collections.ceph.automation.plugins.module_utils.ceph_fs_volume_common import \
         get_fs_volume
 except ImportError:
-    from module_utils.ceph_common import exec_command, build_base_cmd_shell, exit_module
+    from module_utils.ceph_common import (
+        exec_command,
+        build_base_cmd_shell,
+        exit_module,
+        append_shell_ceph_subargs,
+        CEPH_CLI_SHARED_OPTIONS,
+    )
     from module_utils.ceph_fs_volume_common import get_fs_volume
 
 import datetime
@@ -223,7 +231,7 @@ def resize_fs_volume(
     no_shrink = '--no-shrink' if not module.params['force_shrink'] else None
 
     resize_fs = build_base_cmd_shell(module)
-    resize_fs.extend(['ceph', 'fs'])
+    append_shell_ceph_subargs(module, resize_fs, ['fs'])
 
     if volume_type == 'subvolume_group':
         resize_fs.extend(['subvolumegroup', 'resize', parent_volume, name, size, no_shrink])
@@ -256,7 +264,7 @@ def create_fs_volume(
     """
 
     create_fs = build_base_cmd_shell(module)
-    create_fs.extend(['ceph', 'fs'])
+    append_shell_ceph_subargs(module, create_fs, ['fs'])
 
     if volume_type == 'volume':
         placement = module.params.get('initial_placement', None)
@@ -296,7 +304,8 @@ def get_remove_allowed_flag(module: AnsibleModule) -> bool:
 
     removal_allowed = False
     get_flag = build_base_cmd_shell(module)
-    get_flag.extend(['ceph', 'config', 'get', 'mon', 'mon_allow_pool_delete', '--format=json'])
+    append_shell_ceph_subargs(
+        module, get_flag, ['config', 'get', 'mon', 'mon_allow_pool_delete', '--format=json'])
     rc, cmd, out, err = exec_command(module, get_flag)
     if rc == 0:
         removal_allowed = json.loads(out)
@@ -317,7 +326,8 @@ def set_remove_allowed_flag(
     """
 
     set_flag = build_base_cmd_shell(module)
-    set_flag.extend(['ceph', 'config', 'set', 'mon', 'mon_allow_pool_delete', str(flag_value)])
+    append_shell_ceph_subargs(
+        module, set_flag, ['config', 'set', 'mon', 'mon_allow_pool_delete', str(flag_value)])
 
     return exec_command(module, set_flag)
 
@@ -344,7 +354,7 @@ def remove_fs_volume(
     removal_allowed = get_remove_allowed_flag(module)
 
     remove_volume = build_base_cmd_shell(module)
-    remove_volume.extend(['ceph', 'fs'])
+    append_shell_ceph_subargs(module, remove_volume, ['fs'])
 
     if volume_type == 'volume':
         remove_volume.extend(['volume', 'rm', name, '--yes-i-really-mean-it'])
@@ -374,6 +384,7 @@ def remove_fs_volume(
 def run_module():
     module = AnsibleModule(
         argument_spec=dict(
+            **CEPH_CLI_SHARED_OPTIONS,
             fsid=dict(type='str', required=False),
             image=dict(type='str', required=False),
             name=dict(type='str', required=True),

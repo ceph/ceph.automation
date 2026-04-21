@@ -29,6 +29,8 @@ short_description: Lists Ceph Crush Replicated/Erasure Rules
 version_added: "1.1.0"
 description:
     - Retrieves Ceph Crush rule(s).
+extends_documentation_fragment:
+  - ceph.automation.ceph_cli
 options:
     name:
         description:
@@ -63,12 +65,16 @@ try:
     from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import \
         build_base_cmd_shell, \
         exit_module, \
-        exec_command
+        exec_command, \
+        append_shell_ceph_subargs, \
+        CEPH_CLI_SHARED_OPTIONS
 except ImportError:
     from module_utils.ceph_common import \
         build_base_cmd_shell, \
         exit_module, \
-        exec_command
+        exec_command, \
+        append_shell_ceph_subargs, \
+        CEPH_CLI_SHARED_OPTIONS
 
 import datetime
 
@@ -76,6 +82,7 @@ import datetime
 def main():
     module = AnsibleModule(
         argument_spec=dict(
+            **CEPH_CLI_SHARED_OPTIONS,
             name=dict(type='str', required=False),
             fsid=dict(type='str', required=False),
             image=dict(type='str', required=False),
@@ -87,7 +94,7 @@ def main():
 
     name = module.params.get('name')
     cmd = build_base_cmd_shell(module)
-    cmd.extend(['ceph', 'osd', 'crush', 'rule', 'dump', name, '--format=json'])
+    append_shell_ceph_subargs(module, cmd, ['osd', 'crush', 'rule', 'dump', name, '--format=json'])
     rc, cmd, out, err = exec_command(module, cmd)
 
     exit_module(module=module, out=out, rc=rc, cmd=cmd, err=err, startd=startd, changed=False)  # noqa: E501

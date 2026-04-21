@@ -41,6 +41,68 @@ ansible-galaxy collection install ceph.automation:==X.Y.Z
 
 See [Ansible Using collections](https://docs.ansible.com/ansible/latest/user_guide/collections_using.html) for more details.
 
+## Ceph CLI execution (cephadm vs host `ceph`)
+
+Several modules run Ceph commands either through **cephadm** (`cephadm shell ceph …`) or directly with the **`ceph`** binary on the target (keyring auth). This matters for clusters **not** managed by cephadm (for example some Proxmox VE setups).
+
+### Options
+
+| Parameter | Default | Purpose |
+|-----------|---------|---------|
+| `use_cephadm` | `true` | `true`: cephadm shell; `false`: host `ceph` |
+| `cluster` | `ceph` | Cluster name for host `ceph` (`--cluster`) |
+| `ceph_client` | `client.admin` | Client name for host `ceph` (`-n`) |
+| `keyring` | *(derived)* | Keyring path; default `/etc/ceph/<cluster>.<ceph_client>.keyring` |
+
+These options are documented on each affected module and shared via the **`ceph.automation.ceph_cli`** doc fragment.
+
+### Apply to every supported module in a play
+
+Use the **`ceph_cli`** action group so you set `use_cephadm` once (see `meta/runtime.yml` for the module list):
+
+```yaml
+- name: Manage Ceph without cephadm shell
+  hosts: ceph_nodes
+  become: true
+
+  module_defaults:
+    group/ceph.automation.ceph_cli:
+      use_cephadm: false
+      # Optional if paths differ from defaults:
+      # cluster: ceph
+      # ceph_client: client.admin
+      # keyring: /etc/ceph/ceph.client.admin.keyring
+
+  tasks:
+    - name: Read a config value
+      ceph.automation.ceph_config:
+        action: get
+        who: global
+        option: osd_pool_default_size
+```
+
+### Override on a single task
+
+```yaml
+- hosts: mixed
+  become: true
+  module_defaults:
+    group/ceph.automation.ceph_cli:
+      use_cephadm: true
+
+  tasks:
+    - name: This task uses host ceph instead
+      ceph.automation.ceph_config:
+        use_cephadm: false
+        action: get
+        who: global
+        option: osd_pool_default_size
+```
+
+### `cephadm_registry_login`
+
+`cephadm_registry_login` only works with cephadm. It fails if `use_cephadm: false`.
+
 ## Release notes
 
 See the [changelog](https://github.com/ceph/ceph.automation/blob/main/CHANGELOG.rst).

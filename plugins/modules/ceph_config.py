@@ -21,6 +21,8 @@ short_description: set ceph config
 version_added: "1.1.0"
 description:
     - Set Ceph config options.
+extends_documentation_fragment:
+  - ceph.automation.ceph_cli
 options:
     fsid:
         description:
@@ -87,9 +89,21 @@ RETURN = '''#  '''
 from typing import Any, Dict, List, Tuple, Union
 from ansible.module_utils.basic import AnsibleModule  # type: ignore
 try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, build_base_cmd_shell, fatal  # type: ignore
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import (  # type: ignore
+        exit_module,
+        build_base_cmd_shell,
+        fatal,
+        append_shell_ceph_subargs,
+        CEPH_CLI_SHARED_OPTIONS,
+    )
 except ImportError:
-    from module_utils.ceph_common import exit_module, build_base_cmd_shell, fatal  # type: ignore
+    from module_utils.ceph_common import (  # type: ignore
+        exit_module,
+        build_base_cmd_shell,
+        fatal,
+        append_shell_ceph_subargs,
+        CEPH_CLI_SHARED_OPTIONS,
+    )
 
 import datetime
 import json
@@ -100,7 +114,7 @@ def set_option(module: "AnsibleModule",
                option: str,
                value: str) -> Tuple[int, List[str], str, str]:
     cmd = build_base_cmd_shell(module)
-    cmd.extend(['ceph', 'config', 'set', who, option, value])
+    append_shell_ceph_subargs(module, cmd, ['config', 'set', who, option, value])
 
     rc, out, err = module.run_command(cmd)
 
@@ -109,7 +123,7 @@ def set_option(module: "AnsibleModule",
 
 def get_config_dump(module: "AnsibleModule") -> Tuple[int, List[str], str, str]:
     cmd = build_base_cmd_shell(module)
-    cmd.extend(['ceph', 'config', 'dump', '--format', 'json'])
+    append_shell_ceph_subargs(module, cmd, ['config', 'dump', '--format', 'json'])
     rc, out, err = module.run_command(cmd)
     if rc:
         fatal(message=f"Can't get current configuration via `ceph config dump`.Error:\n{err}", module=module)
@@ -127,6 +141,7 @@ def get_current_value(who: str, option: str, config_dump: List[Dict[str, Any]]) 
 def main() -> None:
     module = AnsibleModule(
         argument_spec=dict(
+            **CEPH_CLI_SHARED_OPTIONS,
             who=dict(type='str', required=True),
             action=dict(type='str', required=False, choices=['get', 'set'], default='set'),
             option=dict(type='str', required=True),
