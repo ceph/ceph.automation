@@ -86,6 +86,9 @@ options:
         type: str
         required: false
         default: present
+extends_documentation_fragment:
+  - ceph.automation.ceph_cli
+
 author:
     - Guillaume Abrioux (@guits)
 '''
@@ -115,9 +118,13 @@ RETURN = '''#  '''
 
 from ansible.module_utils.basic import AnsibleModule  # type: ignore
 try:
-    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import exit_module, build_base_cmd_orch  # type: ignore
+    from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import (  # type: ignore
+        exit_module,
+        build_base_cmd_orch,
+        CEPH_CLI_SHARED_OPTIONS,
+    )
 except ImportError:
-    from module_utils.ceph_common import exit_module, build_base_cmd_orch
+    from module_utils.ceph_common import exit_module, build_base_cmd_orch, CEPH_CLI_SHARED_OPTIONS
 
 from typing import Optional, List, Tuple
 import datetime
@@ -172,6 +179,7 @@ def update_host(module: "AnsibleModule",
 def main() -> None:
     module = AnsibleModule(
         argument_spec=dict(
+            **CEPH_CLI_SHARED_OPTIONS,
             name=dict(type='str', required=True),
             address=dict(type='str', required=False),
             set_admin_label=dict(type='bool', required=False, default=False),
@@ -199,8 +207,6 @@ def main() -> None:
 
     startd = datetime.datetime.now()
     changed = False
-
-    cmd = ['cephadm']
 
     if module.check_mode:
         exit_module(

@@ -32,6 +32,8 @@ version_added: "1.1.0"
 description:
     - Manage Ceph Crush rule(s) creation, deletion and updates.
     - Erasure-coded rules cannot be updated at the time.
+extends_documentation_fragment:
+  - ceph.automation.ceph_cli
 options:
     name:
         description:
@@ -126,12 +128,20 @@ try:
     from ansible_collections.ceph.automation.plugins.module_utils.ceph_common import \
         exit_module, \
         build_base_cmd_shell, \
-        exec_command
+        exec_command, \
+        append_shell_ceph_subargs, \
+        append_cephadm_shell_tmpdir_mount, \
+        module_use_cephadm, \
+        CEPH_CLI_SHARED_OPTIONS
 except ImportError:
     from module_utils.ceph_common import \
         exit_module, \
         build_base_cmd_shell, \
-        exec_command
+        exec_command, \
+        append_shell_ceph_subargs, \
+        append_cephadm_shell_tmpdir_mount, \
+        module_use_cephadm, \
+        CEPH_CLI_SHARED_OPTIONS
 
 from typing import Dict, List, Tuple
 import datetime
@@ -162,7 +172,7 @@ def create_rule(module: AnsibleModule) -> List[str]:
     profile = module.params.get('profile')
 
     cmd = build_base_cmd_shell(module)
-    cmd.extend(['ceph', 'osd', 'crush', 'rule'])
+    append_shell_ceph_subargs(module, cmd, ['osd', 'crush', 'rule'])
 
     if rule_type == 'replicated':
         cmd.extend(['create-replicated', name, bucket_root, bucket_type])
@@ -187,7 +197,7 @@ def remove_rule(module: AnsibleModule) -> List[str]:
     name = module.params.get('name')
 
     cmd = build_base_cmd_shell(module)
-    cmd.extend(['ceph', 'osd', 'crush', 'rule', 'rm', name])
+    append_shell_ceph_subargs(module, cmd, ['osd', 'crush', 'rule', 'rm', name])
 
     return cmd
 
@@ -234,17 +244,20 @@ def decompile_crushmap(module: AnsibleModule) -> Tuple[int, List[str], str, str]
         decompiled_map = os.path.join(tmpdirname, '_crushmap.txt')
 
         cmd = build_base_cmd_shell(module)
-        cmd.extend(['--mount', '{0}:{0}'.format(tmpdirname), '--'])
+        append_cephadm_shell_tmpdir_mount(module, cmd, tmpdirname)
 
         dump_crush_map = cmd.copy()
-        dump_crush_map.extend(['ceph', 'osd', 'getcrushmap', '-o', binary_map])
+        append_shell_ceph_subargs(module, dump_crush_map, ['osd', 'getcrushmap', '-o', binary_map])
 
         res = exec_command(module, dump_crush_map)
         if res[0] != 0:
             return res[0], res[1], 'dump of the CRUSH map failed with output: {}'.format(res[2]), res[3]
 
-        decompile_map = cmd.copy()
-        decompile_map.extend(['crushtool', '-d', binary_map, '-o', decompiled_map])
+        if module_use_cephadm(module):
+            decompile_map = cmd.copy()
+            decompile_map.extend(['crushtool', '-d', binary_map, '-o', decompiled_map])
+        else:
+            decompile_map = ['crushtool', '-d', binary_map, '-o', decompiled_map]
 
         res = exec_command(module, decompile_map)
         if res[0] != 0:
@@ -328,17 +341,20 @@ def install_crushmap(module: AnsibleModule, crushmap_content: str) -> Tuple[int,
             f.write(crushmap_content)
 
         cmd = build_base_cmd_shell(module)
-        cmd.extend(['--mount', '{0}:{0}'.format(tmpdirname), '--'])
+        append_cephadm_shell_tmpdir_mount(module, cmd, tmpdirname)
 
-        compile_map = cmd.copy()
-        compile_map.extend(['crushtool', '-c', patched_map, '-o', binary_map])
+        if module_use_cephadm(module):
+            compile_map = cmd.copy()
+            compile_map.extend(['crushtool', '-c', patched_map, '-o', binary_map])
+        else:
+            compile_map = ['crushtool', '-c', patched_map, '-o', binary_map]
 
         res = exec_command(module, compile_map)
         if res[0] != 0:
             return res[0], res[1], 'compilation of the CRUSH map failed with output: {}'.format(res[2]), res[3]
 
         install_map = cmd.copy()
-        install_map.extend(['ceph', 'osd', 'setcrushmap', '-i', binary_map])
+        append_shell_ceph_subargs(module, install_map, ['osd', 'setcrushmap', '-i', binary_map])
 
         res = exec_command(module, install_map)
         if res[0] != 0:
@@ -350,6 +366,7 @@ def install_crushmap(module: AnsibleModule, crushmap_content: str) -> Tuple[int,
 def main():
     module = AnsibleModule(
         argument_spec=dict(
+            **CEPH_CLI_SHARED_OPTIONS,
             name=dict(type='str', required=True),
             fsid=dict(type='str', required=False),
             image=dict(type='str', required=False),
@@ -395,7 +412,7 @@ def main():
     changed = False
 
     get_rule = build_base_cmd_shell(module)
-    get_rule.extend(['ceph', 'osd', 'crush', 'rule', 'dump', name, '--format=json'])
+    append_shell_ceph_subargs(module, get_rule, ['osd', 'crush', 'rule', 'dump', name, '--format=json'])
     rc, cmd, out, err = exec_command(module, get_rule)
 
     if state == "present":
