@@ -303,3 +303,41 @@ class TestCephadmBootstrapModule(object):
         assert result['cmd'] == ['cephadm', 'bootstrap', '--mon-ip', fake_ip,
                                  '--registry-json', fake_registry_json]
         assert result['rc'] == 0
+
+    @patch('os.path.exists')
+    @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
+    @patch('ansible.module_utils.basic.AnsibleModule.run_command')
+    def test_idempotent_when_default_ceph_conf_exists(self, m_run_command, m_exit_json, m_exists):
+        set_module_args({
+            'mon_ip': fake_ip
+        })
+        m_exit_json.side_effect = exit_json
+        m_exists.side_effect = lambda p: p == '/etc/ceph/ceph.conf'
+
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
+
+        result = result.value.args[0]
+        assert not result['changed']
+        assert result['rc'] == 0
+        assert '/etc/ceph/ceph.conf already exists' in result['stdout']
+        m_run_command.assert_not_called()
+
+    @patch('os.path.exists')
+    @patch('ansible.module_utils.basic.AnsibleModule.exit_json')
+    @patch('ansible.module_utils.basic.AnsibleModule.run_command')
+    def test_idempotent_skipped_when_allow_overwrite(self, m_run_command, m_exit_json, m_exists):
+        set_module_args({
+            'mon_ip': fake_ip,
+            'allow_overwrite': True
+        })
+        m_exit_json.side_effect = exit_json
+        m_exists.return_value = True
+        m_run_command.return_value = 0, '', ''
+
+        with pytest.raises(AnsibleExitJson) as result:
+            main()
+
+        result = result.value.args[0]
+        assert result['changed']
+        assert result['cmd'] == ['cephadm', 'bootstrap', '--allow-overwrite', '--mon-ip', fake_ip]

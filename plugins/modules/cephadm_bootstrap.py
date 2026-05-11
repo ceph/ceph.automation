@@ -532,6 +532,7 @@ def run_module() -> None:
 
     cmd: list[str] = []
     data_dir = '/var/lib/ceph'
+    config_dir = '/etc/ceph'
     ceph_conf = 'ceph.conf'
     ceph_keyring = 'ceph.client.admin.keyring'
     ceph_pubkey = 'ceph.pub'
@@ -564,7 +565,7 @@ def run_module() -> None:
               ceph_keyring,
               ceph_pubkey]:
         if not allow_overwrite:
-            path: str = os.path.join(data_dir, f)
+            path: str = os.path.join(config_dir, f)
             if os.path.exists(path):
                 out = f'{path} already exists, skipping.'
                 exit_module(

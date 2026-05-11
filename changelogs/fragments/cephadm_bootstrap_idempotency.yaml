@@ -1,0 +1,3 @@
+bugfixes:
+  - cephadm_bootstrap - Corrrect the base path of ceph config from '/var/lib/ceph' to '/etc/ceph'
+    for idempotency check.
