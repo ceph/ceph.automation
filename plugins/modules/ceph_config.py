@@ -133,7 +133,11 @@ def get_config_dump(module: "AnsibleModule") -> Tuple[int, List[str], str, str]:
 
 def get_current_value(who: str, option: str, config_dump: List[Dict[str, Any]]) -> Union[str, None]:
     for config in config_dump:
-        if config['section'] == who and config['name'] == option:
+        current_who = config['section']
+        if config['mask'] != '':
+            current_who = current_who + '/' + config['mask']
+
+        if current_who == who and config['name'] == option:
             return config['value']
     return None
 
