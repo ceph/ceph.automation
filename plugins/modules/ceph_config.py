@@ -36,7 +36,7 @@ options:
         description:
             - whether to get or set the parameter specified in 'option'
         type: str
-        choices: ['get', 'set']
+        choices: ['get', 'rm', 'set']
         default: 'set'
         required: false
     who:
@@ -80,6 +80,12 @@ EXAMPLES = '''
     who: global
     option: osd_pool_default_size
     value: 1
+
+- name: remove osd_memory_target override
+  ceph_config:
+    action: rm
+    who: osd
+    option: osd_memory_target
 '''
 
 RETURN = '''#  '''
@@ -104,6 +110,14 @@ def set_option(module: "AnsibleModule",
 
     rc, out, err = module.run_command(cmd)
 
+    return rc, cmd, out.strip(), err
+
+def remove_option(module: "AnsibleModule",
+                  who: str,
+                  option: str) -> Tuple[int, List[str], str, str]:
+    cmd = build_base_cmd_shell(module)
+    cmd.extend(['ceph', 'config', 'rm', who, option])
+    rc, out, err = module.run_command(cmd)
     return rc, cmd, out.strip(), err
 
 
@@ -150,7 +164,8 @@ def main() -> None:
     module = AnsibleModule(
         argument_spec=dict(
             who=dict(type='str', required=True),
-            action=dict(type='str', required=False, choices=['get', 'set'], default='set'),
+            action=dict(type='str', required=False,
+                        choices=['get', 'rm', 'set'], default='set'),
             option=dict(type='str', required=True),
             value=dict(type='str', required=False),
             fsid=dict(type='str', required=False),
@@ -192,6 +207,25 @@ def main() -> None:
                 rc, cmd, out, err = set_option(module, who, option, value)
             else:
                 cmd = 'ceph config set {} {} {}'.format(who, option, value)
+                out = ''
+                err = ''
+    elif action == 'rm':
+        if current_value is None:
+            cmd = ''
+            out = 'who={} option={} already absent. Skipping.'.format(who, option)
+            err = ''
+        else:
+            changed = True
+
+            diff = dict(
+              before = f'{who} {option} {current_value}\n',
+              after = None
+            )
+
+            if not module.check_mode:
+                rc, cmd, out, err = remove_option(module, who, option)
+            else:
+                cmd = 'ceph config rm {} {}'.format(who, option)
                 out = ''
                 err = ''
     else:
