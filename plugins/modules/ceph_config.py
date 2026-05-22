@@ -123,6 +123,28 @@ def get_current_value(who: str, option: str, config_dump: List[Dict[str, Any]]) 
             return config['value']
     return None
 
+def changes(value: Any, current_value: Any):
+    if value == current_value:
+        return False
+
+    if value and not current_value:
+        return True
+
+    # compare numeric value because Ceph adds trailing zeros to floats
+    try:
+        if float(value) == float(current_value):
+            return False
+    except:
+        pass
+
+    # Ignore case for true or false
+    if value.lower() == "true" and current_value.lower() == "true":
+        return False
+    if value.lower() == "false" and current_value.lower() == "false":
+        return False
+
+    return True
+
 
 def main() -> None:
     module = AnsibleModule(
@@ -144,31 +166,34 @@ def main() -> None:
     value = module.params.get('value')
     action = module.params.get('action')
 
-    if module.check_mode:
-        module.exit_json(
-            changed=False,
-            stdout='',
-            cmd=[],
-            stderr='',
-            rc=0,
-            start='',
-            end='',
-            delta='',
-        )
-
     startd = datetime.datetime.now()
     changed = False
+    diff = dict()
 
     rc, cmd, out, err = get_config_dump(module)
     config_dump = json.loads(out)
     current_value = get_current_value(who, option, config_dump)
 
     if action == 'set':
-        if value.lower() == current_value:
+        if not changes(value, current_value):
+            cmd = ''
             out = 'who={} option={} value={} already set. Skipping.'.format(who, option, value)
+            err = ''
         else:
-            rc, cmd, out, err = set_option(module, who, option, value)
             changed = True
+
+
+            diff = dict(
+              before = f'{option}: {current_value}\n',
+              after = f'{option}: {value}\n'
+            )
+
+            if not module.check_mode:
+                rc, cmd, out, err = set_option(module, who, option, value)
+            else:
+                cmd = 'ceph config set {} {} {}'.format(who, option, value)
+                out = ''
+                err = ''
     else:
         if current_value is None:
             out = ''
@@ -178,7 +203,7 @@ def main() -> None:
 
     exit_module(module=module, out=out, rc=rc,
                 cmd=cmd, err=err, startd=startd,
-                changed=changed)
+                changed=changed, diff=diff)
 
 
 if __name__ == '__main__':
