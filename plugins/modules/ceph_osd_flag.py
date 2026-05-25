@@ -44,6 +44,11 @@ options:
         type: str
         required: false
         default: ceph
+    user_key:
+        description:
+            - The ceph user key to use. If not set, the module will generate the name of the key based on the cluster name and user.
+        type: str
+        required: false
     state:
         description:
             - If 'present' is used, the module sets the OSD flag. If 'absent' is used, the module will unset the OSD flag.
@@ -89,6 +94,7 @@ def main():
         argument_spec=dict(
             name=dict(type='str', required=True, choices=['noup', 'nodown', 'noout', 'nobackfill', 'norebalance', 'norecover', 'noscrub', 'nodeep-scrub']),  # noqa: E501
             cluster=dict(type='str', required=False, default='ceph'),
+            user_key=dict(type='str', required=False, default=None, no_log=True),  # noqa: E501
             state=dict(type='str', required=False, default='present', choices=['present', 'absent']),  # noqa: E501
         ),
         supports_check_mode=True,
@@ -96,6 +102,7 @@ def main():
 
     name = module.params.get('name')
     cluster = module.params.get('cluster')
+    user_key = module.params.get('user_key')
     state = module.params.get('state')
 
     startd = datetime.datetime.now()
@@ -103,9 +110,9 @@ def main():
     container_image = is_containerized()
 
     if state == 'present':
-        cmd = generate_cmd(sub_cmd=['osd', 'set'], args=[name], cluster=cluster, container_image=container_image)  # noqa: E501
+        cmd = generate_cmd(sub_cmd=['osd', 'set'], args=[name], cluster=cluster, container_image=container_image, user_key=user_key)  # noqa: E501
     else:
-        cmd = generate_cmd(sub_cmd=['osd', 'unset'], args=[name], cluster=cluster, container_image=container_image)  # noqa: E501
+        cmd = generate_cmd(sub_cmd=['osd', 'unset'], args=[name], cluster=cluster, container_image=container_image, user_key=user_key)  # noqa: E501
 
     if module.check_mode:
         exit_module(
