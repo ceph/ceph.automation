@@ -36,7 +36,7 @@ options:
         description:
             - whether to get or set the parameter specified in 'option'
         type: str
-        choices: ['get', 'set']
+        choices: ['get', 'rm', 'set']
         default: 'set'
         required: false
     who:
@@ -80,6 +80,12 @@ EXAMPLES = '''
     who: global
     option: osd_pool_default_size
     value: 1
+
+- name: remove osd_memory_target override
+  ceph_config:
+    action: rm
+    who: osd
+    option: osd_memory_target
 '''
 
 RETURN = '''#  '''
@@ -106,6 +112,14 @@ def set_option(module: "AnsibleModule",
 
     return rc, cmd, out.strip(), err
 
+def remove_option(module: "AnsibleModule",
+                  who: str,
+                  option: str) -> Tuple[int, List[str], str, str]:
+    cmd = build_base_cmd_shell(module)
+    cmd.extend(['ceph', 'config', 'rm', who, option])
+    rc, out, err = module.run_command(cmd)
+    return rc, cmd, out.strip(), err
+
 
 def get_config_dump(module: "AnsibleModule") -> Tuple[int, List[str], str, str]:
     cmd = build_base_cmd_shell(module)
@@ -119,16 +133,43 @@ def get_config_dump(module: "AnsibleModule") -> Tuple[int, List[str], str, str]:
 
 def get_current_value(who: str, option: str, config_dump: List[Dict[str, Any]]) -> Union[str, None]:
     for config in config_dump:
-        if config['section'] == who and config['name'] == option:
+        current_who = config['section']
+        if config['mask'] != '':
+            current_who = current_who + '/' + config['mask']
+
+        if current_who == who and config['name'] == option:
             return config['value']
     return None
+
+def changes(value: Any, current_value: Any):
+    if value == current_value:
+        return False
+
+    if value and not current_value:
+        return True
+
+    # compare numeric value because Ceph adds trailing zeros to floats
+    try:
+        if float(value) == float(current_value):
+            return False
+    except:
+        pass
+
+    # Ignore case for true or false
+    if value.lower() == "true" and current_value.lower() == "true":
+        return False
+    if value.lower() == "false" and current_value.lower() == "false":
+        return False
+
+    return True
 
 
 def main() -> None:
     module = AnsibleModule(
         argument_spec=dict(
             who=dict(type='str', required=True),
-            action=dict(type='str', required=False, choices=['get', 'set'], default='set'),
+            action=dict(type='str', required=False,
+                        choices=['get', 'rm', 'set'], default='set'),
             option=dict(type='str', required=True),
             value=dict(type='str', required=False),
             fsid=dict(type='str', required=False),
@@ -144,31 +185,53 @@ def main() -> None:
     value = module.params.get('value')
     action = module.params.get('action')
 
-    if module.check_mode:
-        module.exit_json(
-            changed=False,
-            stdout='',
-            cmd=[],
-            stderr='',
-            rc=0,
-            start='',
-            end='',
-            delta='',
-        )
-
     startd = datetime.datetime.now()
     changed = False
+    diff = dict()
 
     rc, cmd, out, err = get_config_dump(module)
     config_dump = json.loads(out)
     current_value = get_current_value(who, option, config_dump)
 
     if action == 'set':
-        if value.lower() == current_value:
+        if not changes(value, current_value):
+            cmd = ''
             out = 'who={} option={} value={} already set. Skipping.'.format(who, option, value)
+            err = ''
         else:
-            rc, cmd, out, err = set_option(module, who, option, value)
             changed = True
+
+
+            diff = dict(
+              before = f'{option}: {current_value}\n',
+              after = f'{option}: {value}\n'
+            )
+
+            if not module.check_mode:
+                rc, cmd, out, err = set_option(module, who, option, value)
+            else:
+                cmd = 'ceph config set {} {} {}'.format(who, option, value)
+                out = ''
+                err = ''
+    elif action == 'rm':
+        if current_value is None:
+            cmd = ''
+            out = 'who={} option={} already absent. Skipping.'.format(who, option)
+            err = ''
+        else:
+            changed = True
+
+            diff = dict(
+              before = f'{who} {option} {current_value}\n',
+              after = None
+            )
+
+            if not module.check_mode:
+                rc, cmd, out, err = remove_option(module, who, option)
+            else:
+                cmd = 'ceph config rm {} {}'.format(who, option)
+                out = ''
+                err = ''
     else:
         if current_value is None:
             out = ''
@@ -178,7 +241,7 @@ def main() -> None:
 
     exit_module(module=module, out=out, rc=rc,
                 cmd=cmd, err=err, startd=startd,
-                changed=changed)
+                changed=changed, diff=diff)
 
 
 if __name__ == '__main__':
