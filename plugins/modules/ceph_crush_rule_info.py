@@ -94,7 +94,11 @@ def main():
 
     name = module.params.get('name')
     cmd = build_base_cmd_shell(module)
-    append_shell_ceph_subargs(module, cmd, ['osd', 'crush', 'rule', 'dump', name, '--format=json'])
+    subargs = ['osd', 'crush', 'rule', 'dump']
+    if name:
+        subargs.append(name)
+    subargs.append('--format=json')
+    append_shell_ceph_subargs(module, cmd, subargs)
     rc, cmd, out, err = exec_command(module, cmd)
 
     exit_module(module=module, out=out, rc=rc, cmd=cmd, err=err, startd=startd, changed=False)  # noqa: E501
