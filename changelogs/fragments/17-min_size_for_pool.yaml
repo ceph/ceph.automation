@@ -1,2 +1,0 @@
-minor_changes:
-  - ceph_pool - Added ability to change the 'min_size' option for Ceph pools. (https://github.com/ceph/ceph.automation/pull/17).

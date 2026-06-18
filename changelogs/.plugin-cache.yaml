@@ -1,0 +1,179 @@
+objects:
+  role: {}
+plugins:
+  become: {}
+  cache: {}
+  callback: {}
+  cliconf: {}
+  connection: {}
+  filter: {}
+  httpapi: {}
+  inventory: {}
+  lookup: {}
+  module:
+    ceph_add_users_buckets:
+      description: bulk create user and buckets
+      name: ceph_add_users_buckets
+      namespace: ''
+      version_added: 1.1.0
+    ceph_authtool:
+      description: ceph keyring manipulation
+      name: ceph_authtool
+      namespace: ''
+      version_added: 1.1.0
+    ceph_config:
+      description: set ceph config
+      name: ceph_config
+      namespace: ''
+      version_added: 1.1.0
+    ceph_crush:
+      description: Create Ceph CRUSH hierarchy
+      name: ceph_crush
+      namespace: ''
+      version_added: 1.1.0
+    ceph_crush_rule:
+      description: Manage Ceph Crush Replicated/Erasure Rule
+      name: ceph_crush_rule
+      namespace: ''
+      version_added: 1.1.0
+    ceph_crush_rule_info:
+      description: Lists Ceph Crush Replicated/Erasure Rules
+      name: ceph_crush_rule_info
+      namespace: ''
+      version_added: 1.1.0
+    ceph_dashboard_user:
+      description: Manage Ceph Dashboard User
+      name: ceph_dashboard_user
+      namespace: ''
+      version_added: 1.1.0
+    ceph_ec_profile:
+      description: Manage Ceph Erasure Code profile
+      name: ceph_ec_profile
+      namespace: ''
+      version_added: 1.1.0
+    ceph_fs:
+      description: Manage Ceph File System
+      name: ceph_fs
+      namespace: ''
+      version_added: 1.1.0
+    ceph_fs_volume:
+      description: Manage volumes, subvolume groups and subvolumes in Ceph filesystem.
+      name: ceph_fs_volume
+      namespace: ''
+      version_added: 1.2.0
+    ceph_fs_volume_info:
+      description: Query CephFS volumes, subvolume groups and subvolumes information.
+      name: ceph_fs_volume_info
+      namespace: ''
+      version_added: 1.2.0
+    ceph_key:
+      description: Manage Cephx key(s)
+      name: ceph_key
+      namespace: ''
+      version_added: 1.1.0
+    ceph_key_info:
+      description: Manage Cephx key(s)
+      name: ceph_key_info
+      namespace: ''
+      version_added: 1.1.0
+    ceph_key_list:
+      description: Manage Cephx key(s)
+      name: ceph_key_list
+      namespace: ''
+      version_added: 1.1.0
+    ceph_mgr_module:
+      description: Manage Ceph MGR module
+      name: ceph_mgr_module
+      namespace: ''
+      version_added: 1.1.0
+    ceph_orch_apply:
+      description: apply service spec
+      name: ceph_orch_apply
+      namespace: ''
+      version_added: 1.0.0
+    ceph_orch_daemon:
+      description: stop/start daemon
+      name: ceph_orch_daemon
+      namespace: ''
+      version_added: 1.0.0
+    ceph_orch_host:
+      description: add/remove hosts
+      name: ceph_orch_host
+      namespace: ''
+      version_added: 1.0.0
+    ceph_osd:
+      description: Manage Ceph OSD state
+      name: ceph_osd
+      namespace: ''
+      version_added: 1.1.0
+    ceph_osd_flag:
+      description: Manage Ceph OSD flag
+      name: ceph_osd_flag
+      namespace: ''
+      version_added: 1.1.0
+    ceph_pool:
+      description: Manage Ceph Pools
+      name: ceph_pool
+      namespace: ''
+      version_added: 1.1.0
+    ceph_volume:
+      description: Create ceph OSDs with ceph-volume
+      name: ceph_volume
+      namespace: ''
+      version_added: 1.1.0
+    ceph_volume_simple_activate:
+      description: Activate legacy OSD with ceph-volume
+      name: ceph_volume_simple_activate
+      namespace: ''
+      version_added: 1.1.0
+    ceph_volume_simple_scan:
+      description: Scan legacy OSD with ceph-volume
+      name: ceph_volume_simple_scan
+      namespace: ''
+      version_added: 1.1.0
+    cephadm_adopt:
+      description: Adopt a Ceph cluster with cephadm
+      name: cephadm_adopt
+      namespace: ''
+      version_added: 1.1.0
+    cephadm_bootstrap:
+      description: Bootstrap a Ceph cluster via cephadm
+      name: cephadm_bootstrap
+      namespace: ''
+      version_added: 1.1.0
+    cephadm_registry_login:
+      description: Log in to container registry
+      name: cephadm_registry_login
+      namespace: ''
+      version_added: 1.0.0
+    radosgw_caps:
+      description: Manage RADOS Gateway Admin capabilities
+      name: radosgw_caps
+      namespace: ''
+      version_added: 1.0.0
+    radosgw_realm:
+      description: Manage RADOS Gateway Realm
+      name: radosgw_realm
+      namespace: ''
+      version_added: 1.1.0
+    radosgw_user:
+      description: Manage RADOS Gateway User
+      name: radosgw_user
+      namespace: ''
+      version_added: 1.1.0
+    radosgw_zone:
+      description: Manage RADOS Gateway Zone
+      name: radosgw_zone
+      namespace: ''
+      version_added: 1.1.0
+    radosgw_zonegroup:
+      description: Manage RADOS Gateway Zonegroup
+      name: radosgw_zonegroup
+      namespace: ''
+      version_added: 1.1.0
+  netconf: {}
+  shell: {}
+  strategy: {}
+  test: {}
+  vars: {}
+version: 1.2.0

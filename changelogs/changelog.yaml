@@ -1,0 +1,47 @@
+ancestor: null
+releases:
+  1.2.0:
+    changes:
+      bugfixes:
+      - 'ceph_orch_apply - Fixed idempotency check for services that do not require
+        the ''service_id'' key in the specification and the ''host'' service type
+        (https://github.com/ceph/ceph.automation/pull/12).
+
+        '
+      - ceph_orch_apply - The fix ensures that the existing orchestrator service is
+        loaded when there are multiple YAML documents returning data for the same
+        service.
+      - 'ceph_pool: fix Pep8 error'
+      major_changes:
+      - Import ceph-ansible modules and fixes unittests
+      minor_changes:
+      - Add ``use_cephadm`` (default ``true``) and ``cluster``, ``ceph_client``, ``keyring``
+        for running Ceph commands through ``cephadm shell`` or the host ``ceph`` binary;
+        register the ``ceph_cli`` action group for ``module_defaults``; add the ``ceph.automation.ceph_cli``
+        doc fragment; document usage in the README (https://github.com/ceph/ceph.automation/pull/40).
+      - 'ceph_crush_rule - refactored to use ``cephadm shell`` command and added the
+        ability to update CRUSH rules. (https://github.com/ceph/ceph.automation/pull/19).
+
+        '
+      - ceph_crush_rule_common - not used after the refactor and dropped. (https://github.com/ceph/ceph.automation/pull/19).
+      - ceph_crush_rule_info - refactored to use ``cephadm shell`` command. (https://github.com/ceph/ceph.automation/pull/19).
+      - ceph_osd_flag - Added support for specifying a custom user key.
+      - ceph_pool - Added ability to change the 'min_size' option for Ceph pools.
+        (https://github.com/ceph/ceph.automation/pull/17).
+    fragments:
+    - 12-ceph_orch_apply.yaml
+    - 17-min_size_for_pool.yaml
+    - 19-ceph_crush_rule.yaml
+    - 1_0_2.yml
+    - 30-ceph_osd_flag.yaml
+    - 39-ceph_pool_pep8_bugfix.yaml
+    - ceph_orch_apply.yaml
+    - use-cephadm-native-cli.yml
+    modules:
+    - description: Manage volumes, subvolume groups and subvolumes in Ceph filesystem.
+      name: ceph_fs_volume
+      namespace: ''
+    - description: Query CephFS volumes, subvolume groups and subvolumes information.
+      name: ceph_fs_volume_info
+      namespace: ''
+    release_date: '2026-06-18'
