@@ -465,6 +465,8 @@ def create_buckets(rgw, buckets, result):
         except TypeError:
             # it doesnt exist
             bucket_info = None
+        except radosgw.exception.NoSuchBucket:
+            bucket_info = None
 
         # if it exists add to failed list
         if bucket_info:
@@ -620,9 +622,8 @@ def main():
 
     # conditional state caused a failure
     if result['added_users'] == '' and result['added_buckets'] == '':
-        module.fail_json(msg='No users or buckets were added successfully',
-                         **result)
-
+        result['changed'] = False
+ 
     # EXIT
     module.exit_json(**result)
 
