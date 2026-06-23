@@ -127,6 +127,11 @@ options:
             - Set the pool application on the pool.
         type: str
         required: false
+    user_key:
+        description:
+            - Set the absolute path to the user key
+        type: str
+        required: false
 '''
 
 EXAMPLES = '''
@@ -544,6 +549,7 @@ def run_module():
         rule_name=dict(type='str', required=False, default=None),
         expected_num_objects=dict(type='str', required=False, default="0"),
         application=dict(type='str', required=False, default=None),
+        user_key=dict(type='str', required=False, default=None, no_log=False),
     )
 
     module = AnsibleModule(
@@ -563,6 +569,7 @@ def run_module():
     pg_autoscale_mode = module.params.get('pg_autoscale_mode')
     target_size_ratio = module.params.get('target_size_ratio')
     application = module.params.get('application')
+    user_key = module.params.get('user_key')
 
     if (module.params.get('pg_autoscale_mode').lower() in
             ['true', 'on', 'yes']):
@@ -611,8 +618,10 @@ def run_module():
     container_image = is_containerized()
 
     user = "client.admin"
-    keyring_filename = cluster + '.' + user + '.keyring'
-    user_key = os.path.join("/etc/ceph/", keyring_filename)
+
+    if not user_key:
+        keyring_filename = cluster + '.' + user + '.keyring'
+        user_key = os.path.join("/etc/ceph/", keyring_filename)
 
     if state == "present":
         rc, cmd, out, err = exec_command(module,
