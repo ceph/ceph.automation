@@ -210,7 +210,7 @@ def run_module():
     module_args = dict(
         cluster=dict(type='str', required=False, default='ceph'),
         name=dict(type='str', required=True),
-        state=dict(type='str', required=False, choices=['present', 'absent'], default='present'),  # noqa: E501
+        state=dict(type='str', required=False, choices=['present', 'absent', "info"], default='present'),  # noqa: E501
         data=dict(type='str', required=False),
         metadata=dict(type='str', required=False),
         max_mds=dict(type='int', required=False),
